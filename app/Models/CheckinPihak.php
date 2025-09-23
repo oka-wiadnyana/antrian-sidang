@@ -27,6 +27,7 @@ class CheckinPihak extends Model
         'latitude' => 'double',
         'longitude' => 'double',
         'jarak_meter' => 'double',
+        'status_sidang' => 'string',
     ];
 
     public function perkara()

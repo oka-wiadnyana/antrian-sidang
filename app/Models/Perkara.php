@@ -96,7 +96,7 @@ class Perkara extends Model
         $lastCheckin = $checkins->max('waktu_checkin'); // Carbon
 
         $waktuSesi = now()->setTimeFromTimeString($this->waktu_mulai_sesi); // Carbon
-
+        // dd($waktuSesi);
 
         return $lastCheckin > $waktuSesi ? $lastCheckin : $waktuSesi;
     }
@@ -136,11 +136,11 @@ class Perkara extends Model
     public function getWaktuMulaiSesiAttribute()
     {
         return match ($this->jenis_perkara) {
-            'permohonan' => '08:00:00',
+            'permohonan' => '09:00:00',
             'gugatan_sederhana' => '11:00:00',
-            'gugatan_cerai' => '08:00:00',
-            'gugatan_non_cerai' => '08:00:00',
-            'pidana' => '08:00:00',
+            'gugatan_cerai' => '11:00:00',
+            'gugatan_non_cerai' => '14:00:00',
+            'pidana' => '14:00:00',
             default => '09:00:00'
         };
     }
@@ -176,7 +176,16 @@ class Perkara extends Model
     public function adaCheckin()
     {
         $checkins = $this->relationLoaded('checkins') ? $this->checkins : collect();
+        // dd($checkins);
         return $checkins->isNotEmpty();
+    }
+
+    public function isCheckedIn($perkara_id, $tanggal_sidang)
+    {
+        $checkedIn = CheckinPihak::where('perkara_id', '=', $perkara_id)->whereDate('waktu_checkin', now()->format('Y-m-d'))->count()
+            ->groupBy('perkara_id');
+
+        return $checkedIn->count();
     }
 
     // Untuk tampilkan "2/4 pihak hadir" di antrian

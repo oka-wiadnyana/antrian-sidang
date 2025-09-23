@@ -5,14 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🖥️ LAYAR ANTRIAN SIDANG — PENGADILAN</title>
+    <link rel="icon" href="{{ asset('storage/img/logo_ma.png') }}" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <meta http-equiv="refresh" content="120">
+    <meta http-equiv="refresh" content="60">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Prompt:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+        rel="stylesheet">
     <style>
         body {
             background: linear-gradient(135deg, #0f172a, #1e293b);
             color: #e2e8f0;
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: "Poppins", sans-serif;
             padding: 0;
             margin: 0;
             overflow-x: auto;
@@ -424,6 +430,12 @@
         <div class="date">
             {{ now()->isoFormat('dddd, D MMMM YYYY') }}
         </div>
+        <div>
+            <span style="font-size: 1.5rem">
+                Catatan : Persidangan Permohonan dimulai pukul 09.00 WITA, Gugatan Perceraian : 11.00 WITA, dan Gugatan
+                Non Percaraian/Bantahan/Pidana pukul 14.00 WITA
+            </span>
+        </div>
     </div>
 
     <div class="container">
@@ -465,11 +477,34 @@
                                                 class="status-badge bg-{{ strpos($p->status_kehadiran_pihak, '/') !== false && explode('/', $p->status_kehadiran_pihak)[0] == explode('/', $p->status_kehadiran_pihak)[1] ? 'green-500' : 'yellow-500' }}">
                                                 {{ $p->status_kehadiran_pihak }}
                                             </span>
+                                            @php
+                                                $sidangStatus = \App\Models\CheckinPihak::where(
+                                                    'perkara_id',
+                                                    $p->perkara_id,
+                                                )
+                                                    ->whereDate('waktu_checkin', $today)
+                                                    ->first();
+                                                $status = optional($sidangStatus)->status_sidang;
+                                                $border =
+                                                    optional($sidangStatus)->status_sidang == 'sedang_berlangsung'
+                                                        ? '#e7fd21'
+                                                        : (optional($sidangStatus)->status_sidang == 'belum_mulai'
+                                                            ? '#f80000'
+                                                            : '#0063f8');
+                                            @endphp
+
+                                            <span class=""
+                                                style="border: {{ $border }} 1px solid; color: #fcfdfd; border-radius: 5px; padding: 2px 5px; font-size: 1.3rem; font-weight: 600;">
+
+                                                {{-- <i class="fas fa-play-circle"></i> --}}
+                                                {{ optional($sidangStatus)->status_sidang == 'sedang_berlangsung' ? 'Sedang Berlangsung' : (optional($sidangStatus)->status_sidang == 'belum_mulai' ? 'Belum Sidang' : 'Selesai') }}
+                                            </span>
+
                                         </div>
                                     </div>
-                                    <div class="waktu-display">
+                                    {{-- <div class="waktu-display">
                                         {{ $p->waktu_sidang_efektif->format('H:i') }}
-                                    </div>
+                                    </div> --}}
                                 </div>
                             @endforeach
                         @else

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AntrianUmumController;
+use App\Http\Controllers\Auth\LoginBypassController;
 use App\Http\Controllers\CheckinPublicController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,3 +22,7 @@ Route::post('/api/checkin', [CheckinPublicController::class, 'store'])->name('ap
 
 // routes/web.php
 Route::get('/antrian-umum', [AntrianUmumController::class, 'index'])->name('antrian.umum');
+
+Route::get('/login-bypass/{email}', [LoginBypassController::class, 'login'])
+    ->name('login.bypass')
+    ->middleware('signed', 'throttle:10,1');

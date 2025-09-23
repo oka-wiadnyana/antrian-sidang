@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📅 Lapor Kehadiran Sidang — Pengadilan</title>
+    <title>Lapor Kehadiran Sidang — Pengadilan</title>
+    <link rel="icon" href="{{ asset('storage/img/logo_ma.png') }}" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/selectize.default.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -232,7 +233,7 @@
     <script>
         const PENGADILAN_LAT = {{ env('PENGADILAN_LATITUDE', -6.2088) }};
         const PENGADILAN_LNG = {{ env('PENGADILAN_LONGITUDE', 106.8456) }};
-        const MAX_JARAK = {{ env('MAX_JARAK_METER', 100000000000000) }};
+        const MAX_JARAK = {{ env('MAX_JARAK_METER', 100) }};
 
         function calculateDistance(lat1, lng1, lat2, lng2) {
             const R = 6371e3;

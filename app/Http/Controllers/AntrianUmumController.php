@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CheckinPihak;
 use App\Models\Perkara;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class AntrianUmumController extends Controller
 {
@@ -20,10 +21,16 @@ class AntrianUmumController extends Controller
             ->get()
             ->groupBy('perkara_id');
 
-        $perkaraSiap = $perkaraHariIni->filter(function ($perkara) use ($allCheckins) {
+        $perkaraSiap = $perkaraHariIni->filter(function ($perkara) use ($allCheckins, $today) {
             $perkara->setRelation('checkins', $allCheckins->get($perkara->perkara_id, collect()));
-            return $perkara->adaCheckin() && $perkara->waktu_sidang_efektif <= now();
-        })->sortBy('waktu_sidang_efektif');
+            return $perkara->adaCheckin() && $perkara->waktu_sidang_efektif <= Carbon::parse($today)->toDateTimeString();
+        })->sortBy(function ($perkara) {
+            // Access the first checkin record from the 'checkins' relation
+            $firstCheckin = $perkara->checkins->first();
+
+            // Return the waktu_checkin attribute. Use null if no checkin is found.
+            return $firstCheckin ? $firstCheckin->waktu_checkin : null;
+        });
 
         $antrian = collect();
 
@@ -46,6 +53,6 @@ class AntrianUmumController extends Controller
             $antrian->put($hakim, $perkaraList);
         }
 
-        return view('antrian.umum', compact('antrian'));
+        return view('antrian.umum', compact('antrian', 'today'));
     }
 }

@@ -31,7 +31,7 @@ class CheckinPublicController extends Controller
         ]);
 
         // Validasi geolocation
-        if ($request->jarak_meter > env('MAX_JARAK_METER', 1000000)) {
+        if ($request->jarak_meter > env('MAX_JARAK_METER', 100)) {
             return response()->json(['error' => 'Anda harus berada di area pengadilan.'], 400);
         }
 

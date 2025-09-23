@@ -1,13 +1,17 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\CheckinPihaks;
 
+use App\Filament\Resources\CheckinPihaks\Pages\ListCheckinPihaks;
 use App\Models\CheckinPihak;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use BackedEnum;
-
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\TernaryFilter;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Request;
 
 class CheckinPihakResource extends Resource
 {
@@ -17,7 +21,18 @@ class CheckinPihakResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $perkaraId = Request::get('tableFilterForm')['perkara_id'] ?? null;
+
         return $table
+            ->modifyQueryUsing(function ($query) use ($perkaraId) {
+
+                if ($perkaraId) {
+
+                    return $query->orderByDesc('waktu_checkin')->where('perkara_id', $perkaraId);
+                } else {
+                    return $query->orderByDesc('waktu_checkin');
+                }
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('perkara.nomor_perkara')->searchable(),
                 Tables\Columns\TextColumn::make('tipe_pihak')->badge(),
@@ -28,18 +43,13 @@ class CheckinPihakResource extends Resource
                 Tables\Columns\TextColumn::make('waktu_checkin')->dateTime(),
                 Tables\Columns\TextColumn::make('jarak_meter')->sortable(),
             ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('status_kehadiran')->options([
-                    'pihak_langsung' => 'Pihak Langsung',
-                    'kuasa' => 'Kuasa',
-                ]),
-            ]);
+            ->filters([]);
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Resources\CheckinPihakResource\Pages\ListCheckinPihaks::route('/'),
+            'index' => ListCheckinPihaks::route('/'),
         ];
     }
 }

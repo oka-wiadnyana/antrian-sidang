@@ -10,6 +10,7 @@ use Filament\Tables\Table;
 
 class AntrianSidangsTable
 {
+
     public static function configure(Table $table): Table
     {
         return $table
