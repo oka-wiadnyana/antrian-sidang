@@ -11,7 +11,7 @@ class AntrianUmumController extends Controller
 {
     public function index()
     {
-        $today = now()->format('Y-m-d');
+        $today = '2025-09-23';
         $perkaraHariIni = Perkara::whereHas('jadwal', function ($q) use ($today) {
             $q->whereDate('tanggal_sidang', $today);
         })->get();
@@ -23,7 +23,7 @@ class AntrianUmumController extends Controller
 
         $perkaraSiap = $perkaraHariIni->filter(function ($perkara) use ($allCheckins, $today) {
             $perkara->setRelation('checkins', $allCheckins->get($perkara->perkara_id, collect()));
-            return $perkara->adaCheckin() && $perkara->waktu_sidang_efektif <= Carbon::parse($today)->toDateTimeString();
+            return $perkara->adaCheckin() && $perkara->waktu_sidang_efektif >= Carbon::parse($today)->toDateTimeString();
         })->sortBy(function ($perkara) {
             // Access the first checkin record from the 'checkins' relation
             $firstCheckin = $perkara->checkins->first();

@@ -239,6 +239,23 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
+        /* Background colors for badges */
+        .bg-blue-500 {
+            background-color: #3b82f6;
+        }
+
+        .bg-yellow-500 {
+            background-color: #eab308;
+        }
+
+        .bg-red-500 {
+            background-color: #ef4444;
+        }
+
+        .bg-green-500 {
+            background-color: #22c55e;
+        }
+
         /* Scrollbar styling */
         .antrian-list::-webkit-scrollbar {
             width: 8px;
@@ -302,6 +319,7 @@
             }
         }
 
+        /* FIXED: Mobile layout - cards stack vertically */
         @media (max-width: 768px) {
             .header {
                 padding: 1rem 1.5rem;
@@ -310,18 +328,35 @@
             .header h1 {
                 font-size: 1.8rem;
                 gap: 0.8rem;
+                flex-direction: column;
+            }
+
+            .clock {
+                margin-left: 0;
+                margin-top: 0.5rem;
+                font-size: 1.2rem;
             }
 
             .container {
                 padding: 1rem;
                 gap: 1rem;
-                padding-right: 60px;
+                /* CHANGE: Make container vertical on mobile */
+                flex-direction: column;
+                align-items: stretch;
+                /* CHANGE: Remove horizontal scroll on mobile */
+                overflow-x: visible;
+                padding-right: 1rem;
             }
 
             .majelis-card {
+                /* CHANGE: Full width on mobile instead of fixed width */
                 width: 100%;
-                max-width: 360px;
+                max-width: none;
                 border-radius: 12px;
+                /* CHANGE: Remove flex shrink to allow natural height */
+                flex-shrink: 1;
+                /* CHANGE: Allow more height on mobile since we stack */
+                max-height: none;
             }
 
             .majelis-header {
@@ -355,8 +390,14 @@
                 font-size: 1.6rem;
             }
 
-            .majelis-card {
-                max-width: 320px;
+            .header .date {
+                font-size: 1rem;
+            }
+
+            /* Additional note styling for mobile */
+            .header div:last-child {
+                font-size: 0.9rem !important;
+                margin-top: 0.5rem;
             }
 
             .nomor-antrian {
@@ -378,6 +419,18 @@
             .waktu-display {
                 font-size: 1.1rem;
             }
+
+            .jenis-badge,
+            .status-badge {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.6rem;
+            }
+
+            /* Status badge on mobile */
+            .info-row span[style*="border"] {
+                font-size: 1rem !important;
+                padding: 3px 8px !important;
+            }
         }
 
         /* Animation */
@@ -397,27 +450,69 @@
             animation: fadeIn 0.5s ease-out;
         }
 
-        /* Scrollbar for container */
-        .container::-webkit-scrollbar {
-            height: 8px;
+        /* Scrollbar for container - only for desktop */
+        @media (min-width: 769px) {
+            .container::-webkit-scrollbar {
+                height: 8px;
+            }
+
+            .container::-webkit-scrollbar-track {
+                background: rgba(30, 41, 59, 0.5);
+                border-radius: 10px;
+            }
+
+            .container::-webkit-scrollbar-thumb {
+                background: rgba(51, 65, 85, 0.8);
+                border-radius: 10px;
+                border: 2px solid rgba(30, 41, 59, 0.5);
+            }
+
+            .container::-webkit-scrollbar-thumb:hover {
+                background: rgba(51, 65, 85, 1);
+            }
         }
 
-        .container::-webkit-scrollbar-track {
-            background: rgba(30, 41, 59, 0.5);
-            border-radius: 10px;
+        @media (max-width: 768px) {
+            .container {
+                overflow-x: hidden !important;
+                flex-wrap: wrap;
+            }
+
+            .majelis-card {
+                min-width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box;
+            }
+
+            /* Nonaktifkan efek hover yang tidak perlu di mobile */
+            .majelis-card:hover {
+                transform: none !important;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+            }
         }
 
-        .container::-webkit-scrollbar-thumb {
-            background: rgba(51, 65, 85, 0.8);
-            border-radius: 10px;
-            border: 2px solid rgba(30, 41, 59, 0.5);
-        }
+        @media (min-width: 769px) {
+            .container {
+                display: flex;
+                gap: 2rem;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                /* smooth di iOS */
+                padding-bottom: 2rem;
+                scrollbar-width: thin;
+                scrollbar-color: #334155 #1e293b;
+            }
 
-        .container::-webkit-scrollbar-thumb:hover {
-            background: rgba(51, 65, 85, 1);
+            .majelis-card {
+                scroll-snap-align: start;
+                flex: 0 0 auto;
+                /* JANGAN biarkan shrink atau grow */
+            }
         }
     </style>
 </head>
+
 
 <body>
     <div class="header">
@@ -430,11 +525,10 @@
         <div class="date">
             {{ now()->isoFormat('dddd, D MMMM YYYY') }}
         </div>
-        <div>
-            <span style="font-size: 1.5rem">
-                Catatan : Persidangan Permohonan dimulai pukul 09.00 WITA, Gugatan Perceraian : 11.00 WITA, dan Gugatan
-                Non Percaraian/Bantahan/Pidana pukul 14.00 WITA
-            </span>
+        <div
+            style="font-size: 0.95rem; line-height: 1.4; margin-top: 0.8rem; max-width: 90vw; overflow-wrap: break-word;">
+            <strong>Catatan:</strong> Persidangan Permohonan dimulai pukul 09.00 WITA, Gugatan Perceraian: 11.00 WITA,
+            dan Gugatan Non Perceraian/Bantahan/Pidana pukul 14.00 WITA
         </div>
     </div>
 
@@ -469,12 +563,10 @@
                                     <div class="perkara-info">
                                         <div class="nomor-perkara">{{ $p->nomor_perkara }}</div>
                                         <div class="info-row">
-                                            <span
-                                                class="jenis-badge @if ($p->jenis_perkara === 'permohonan') bg-blue-500 @elseif($p->jenis_perkara === 'gugatan_cerai') bg-yellow-500 @else bg-red-500 @endif">
+                                            <span class="jenis-badge ">
                                                 {{ strtoupper(substr($p->jenis_perkara, 0, 3)) }}
                                             </span>
-                                            <span
-                                                class="status-badge bg-{{ strpos($p->status_kehadiran_pihak, '/') !== false && explode('/', $p->status_kehadiran_pihak)[0] == explode('/', $p->status_kehadiran_pihak)[1] ? 'green-500' : 'yellow-500' }}">
+                                            <span class="status-badge ">
                                                 {{ $p->status_kehadiran_pihak }}
                                             </span>
                                             @php
@@ -537,44 +629,52 @@
             document.getElementById('current-time').textContent = timeString;
         }
 
-        // Auto scroll horizontal untuk container majelis
+        // Auto scroll horizontal UNTUK DESKTOP SAJA
         function autoScrollHorizontal() {
+            if (window.innerWidth <= 768) return;
+
             const container = document.querySelector('.container');
             if (!container) return;
 
-            const cards = document.querySelectorAll('.majelis-card');
+            const cards = Array.from(document.querySelectorAll('.majelis-card'));
             if (cards.length <= 1) return;
+
+            // Cek apakah semua card sudah muat di layar → jangan scroll otomatis!
+            const totalCardsWidth = cards.reduce((sum, card) => sum + card.offsetWidth, 0);
+            const totalGap = (cards.length - 1) * parseFloat(getComputedStyle(container).gap || '32px');
+            const containerWidth = container.clientWidth;
+
+            if (totalCardsWidth + totalGap <= containerWidth) {
+                console.log("Semua card muat di layar, auto-scroll dinonaktifkan.");
+                return;
+            }
 
             let currentCardIndex = 0;
             let scrollInterval;
 
             function scrollToCard(index) {
-                // Jika sudah sampai akhir → kembali ke awal
-                if (index >= cards.length) {
-                    currentCardIndex = 0;
-                    index = 0;
-                }
+                if (index >= cards.length) index = 0;
+                currentCardIndex = index;
 
                 const card = cards[index];
                 if (!card) return;
 
-                // Hitung posisi scroll yang tepat
+                // Hitung posisi scroll yang TEPAT — termasuk gap!
                 let scrollLeft = 0;
                 for (let i = 0; i < index; i++) {
-                    scrollLeft += cards[i].offsetWidth + 15; // 15px = gap
+                    scrollLeft += cards[i].offsetWidth + parseFloat(getComputedStyle(container).gap || '32px');
                 }
 
-                // Pastikan tidak melebihi batas maksimum
+                // Jangan scroll melebihi batas
                 const maxScroll = container.scrollWidth - container.clientWidth;
                 scrollLeft = Math.min(scrollLeft, maxScroll);
 
-                // Scroll dengan animasi smooth
                 container.scrollTo({
                     left: scrollLeft,
                     behavior: 'smooth'
                 });
 
-                // Highlight card yang sedang aktif
+                // Highlight card aktif
                 cards.forEach(c => {
                     c.style.opacity = '0.6';
                     c.style.transform = 'scale(0.98)';
@@ -589,44 +689,60 @@
                 scrollInterval = setInterval(() => {
                     currentCardIndex = (currentCardIndex + 1) % cards.length;
                     scrollToCard(currentCardIndex);
-                }, 8000); // Ganti majelis setiap 8 detik
+                }, 8000); // Setiap 8 detik ganti card
             }
 
-            // Scroll ke card pertama saat mulai
+            // Mulai dari card pertama
             scrollToCard(0);
 
-            // Mulai auto scroll setelah 3 detik
+            // Mulai auto-scroll setelah jeda
             setTimeout(startAutoScroll, 3000);
 
-            // Cleanup
-            window.addEventListener('beforeunload', () => {
-                if (scrollInterval) clearInterval(scrollInterval);
-            });
+            window.horizontalScrollInterval = scrollInterval;
         }
 
-        // Auto scroll vertical untuk tiap majelis
+        // Auto scroll vertical untuk tiap majelis (semua device)
         function autoScrollVertical() {
             document.querySelectorAll('.antrian-list').forEach(list => {
                 const scrollHeight = list.scrollHeight;
                 const clientHeight = list.clientHeight;
 
+                // Hanya scroll jika konten lebih tinggi dari container
                 if (scrollHeight > clientHeight) {
                     let scrollPos = 0;
-                    const scrollStep = 1;
-                    const scrollDelay = 50;
+                    const scrollStep = 1; // kecepatan scroll
+                    const scrollDelay = 60; // delay antar step (semakin kecil, semakin cepat)
+                    let direction = 1; // 1 = turun, -1 = naik
 
                     const scrollInterval = setInterval(() => {
-                        if (scrollPos >= scrollHeight - clientHeight) {
-                            scrollPos = 0;
-                            list.scrollTop = 0;
+                        // Jika sampai bawah
+                        if (scrollPos >= scrollHeight - clientHeight - 10) {
+                            direction = -1; // mulai scroll ke atas
+                            clearInterval(scrollInterval);
+                            // Tahan 3 detik di bawah
                             setTimeout(() => {
-                                scrollPos += scrollStep;
-                                list.scrollTop = scrollPos;
-                            }, 3000); // Pause 3 detik di atas
-                        } else {
-                            scrollPos += scrollStep;
-                            list.scrollTop = scrollPos;
+                                const upwardInterval = setInterval(() => {
+                                    scrollPos -= scrollStep;
+                                    if (scrollPos <= 0) {
+                                        clearInterval(upwardInterval);
+                                        scrollPos = 0;
+                                        // Tahan 3 detik di atas
+                                        setTimeout(() => {
+                                            autoScrollVertical
+                                                (); // restart scroll dari atas
+                                        }, 3000);
+                                    }
+                                    list.scrollTop = scrollPos;
+                                }, scrollDelay);
+                            }, 3000);
                         }
+                        // Jika sampai atas
+                        else if (scrollPos <= 0) {
+                            direction = 1;
+                        }
+
+                        scrollPos += scrollStep * direction;
+                        list.scrollTop = scrollPos;
                     }, scrollDelay);
 
                     list.dataset.scrollInterval = scrollInterval;
@@ -634,21 +750,23 @@
             });
         }
 
-        // Jalankan semua fungsi
+        // Jalankan fungsi setelah halaman siap
         document.addEventListener('DOMContentLoaded', function() {
             updateTime();
             setInterval(updateTime, 1000);
 
-            // Tunggu sebentar agar semua element siap
+            // Tunggu render selesai
             setTimeout(() => {
                 autoScrollVertical();
                 autoScrollHorizontal();
             }, 2000);
         });
 
-        // Handle refresh halaman
+        // Cleanup sebelum halaman ditutup
         window.addEventListener('beforeunload', function() {
-            // Cleanup vertical scroll
+            if (window.horizontalScrollInterval) {
+                clearInterval(window.horizontalScrollInterval);
+            }
             document.querySelectorAll('.antrian-list').forEach(list => {
                 if (list.dataset.scrollInterval) {
                     clearInterval(list.dataset.scrollInterval);
@@ -656,18 +774,27 @@
             });
         });
 
-        // Handle window resize
+        // Handle resize — restart auto scroll horizontal jika perlu
         let resizeTimer;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
-                // Reset auto scroll
+                // Bersihkan horizontal scroll lama
+                if (window.horizontalScrollInterval) {
+                    clearInterval(window.horizontalScrollInterval);
+                    delete window.horizontalScrollInterval;
+                }
+
+                // Bersihkan vertical scroll
                 document.querySelectorAll('.antrian-list').forEach(list => {
                     if (list.dataset.scrollInterval) {
                         clearInterval(list.dataset.scrollInterval);
                     }
                 });
+
+                // Restart
                 autoScrollHorizontal();
+                autoScrollVertical();
             }, 250);
         });
     </script>
