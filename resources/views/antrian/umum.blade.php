@@ -586,7 +586,7 @@
                                             @endphp
 
                                             <span class=""
-                                                style="border: {{ $border }} 1px solid; color: #fcfdfd; border-radius: 5px; padding: 2px 5px; font-size: 1.3rem; font-weight: 600;">
+                                                style="border: {{ $border }} 1px solid; color: #fcfdfd; border-radius: 5px; padding: 2px 5px; font-size: 1rem; font-weight: 600;">
 
                                                 {{-- <i class="fas fa-play-circle"></i> --}}
                                                 {{ optional($sidangStatus)->status_sidang == 'sedang_berlangsung' ? 'Sedang Berlangsung' : (optional($sidangStatus)->status_sidang == 'belum_mulai' ? 'Belum Sidang' : 'Selesai') }}

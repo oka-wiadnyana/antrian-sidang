@@ -23,7 +23,8 @@ class AntrianUmumController extends Controller
 
         $perkaraSiap = $perkaraHariIni->filter(function ($perkara) use ($allCheckins, $today) {
             $perkara->setRelation('checkins', $allCheckins->get($perkara->perkara_id, collect()));
-            return $perkara->adaCheckin() && $perkara->waktu_sidang_efektif <= Carbon::parse($today)->toDateTimeString();
+
+            return $perkara->adaCheckin() && $perkara->waktu_sidang_efektif <= now();
         })->sortBy(function ($perkara) {
             // Access the first checkin record from the 'checkins' relation
             $firstCheckin = $perkara->checkins->first();
@@ -31,6 +32,7 @@ class AntrianUmumController extends Controller
             // Return the waktu_checkin attribute. Use null if no checkin is found.
             return $firstCheckin ? $firstCheckin->waktu_checkin : null;
         });
+
 
         $antrian = collect();
 
