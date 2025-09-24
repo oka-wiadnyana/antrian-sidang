@@ -219,8 +219,14 @@
 
 
                     </div>
-                    <div class="card-footer bg-white text-center py-3">
-                        <small class="text-muted">© 2025 Pengadilan Negeri. Sistem Antrian Sidang.</small>
+                    <div class="card-footer bg-white text-center py-3 flex flex-col">
+                        <div style="width: 100%">
+
+                            <a href="{{ url('antrian-umum') }}" class="btn btn-warning " style="width: 100%"
+                                target="_blank">Lihat
+                                Antrian</a>
+                        </div>
+                        <small class="text-muted">© 2025 Pengadilan Negeri Tabanan. Sistem Antrian Sidang.</small>
                     </div>
                 </div>
             </div>
