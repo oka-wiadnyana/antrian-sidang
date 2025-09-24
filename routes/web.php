@@ -9,7 +9,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/lapor-hadir', [CheckinPublicController::class, 'showForm'])->name('lapor-hadir.form');
+Route::get('/', [CheckinPublicController::class, 'showForm'])->name('lapor-hadir.form');
 Route::post('/lapor-hadir', [CheckinPublicController::class, 'store'])->name('lapor-hadir.store');
 
 // Untuk autocomplete nomor perkara
