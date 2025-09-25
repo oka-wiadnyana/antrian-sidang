@@ -7,7 +7,7 @@
     <title>🖥️ LAYAR ANTRIAN SIDANG — PENGADILAN</title>
     <link rel="icon" href="{{ asset('storage/img/logo_ma.png') }}" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <meta http-equiv="refresh" content="60">
+    <meta http-equiv="refresh" content="180">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -236,14 +236,15 @@
             display: none;
         }
 
-        /* === MOBILE RESPONSIVE === */
+        /* === MOBILE RESPONSIVE — DIPERBAIKI === */
         @media (max-width: 768px) {
 
             .queue-header,
             .queue-item {
-                grid-template-columns: 45px 1fr 80px 90px 120px;
+                grid-template-columns: 45px 1fr 80px auto;
+                /* Gabungkan Kehadiran + Status */
                 font-size: 1.25rem;
-                gap: 10px;
+                gap: 8px;
             }
 
             .section-header {
@@ -254,7 +255,25 @@
                 font-size: 1.25rem;
             }
 
+            .queue-header {
+                display: none;
+                /* Sembunyikan header kolom di mobile */
+            }
+
+            /* Ubah layout Kehadiran & Status jadi vertikal */
+            .queue-item {
+                grid-template-columns: 45px 1fr 80px auto;
+                gap: 8px;
+            }
+
+            .attendance-status,
             .session-status {
+                display: block;
+                margin: 0.2rem 0;
+                padding: 0.3rem 0.5rem;
+                min-width: auto;
+                max-width: 100%;
+                text-align: center;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -265,9 +284,9 @@
 
             .queue-header,
             .queue-item {
-                grid-template-columns: 40px 1fr 70px 100px;
+                grid-template-columns: 40px 1fr 70px auto;
                 font-size: 1.15rem;
-                gap: 8px;
+                gap: 6px;
             }
 
             .queue-header div:nth-child(3),
@@ -281,6 +300,13 @@
 
             .case-number {
                 font-size: 1.15rem;
+            }
+
+            .attendance-status,
+            .session-status {
+                margin: 0.15rem 0;
+                padding: 0.25rem 0.4rem;
+                font-size: 0.95rem;
             }
         }
     </style>
@@ -331,7 +357,7 @@
                             <div>NO</div>
                             <div>NOMOR PERKARA</div>
                             <div>JENIS</div>
-                            <div>KEHADIRAN</div>
+                            <div id="attendance-header">KEHADIRAN</div>
                             <div>STATUS</div>
                         </div>
 
@@ -441,7 +467,6 @@ $sidangStatus = \App\Models\CheckinPihak::where('perkara_id', $p->perkara_id)
             </div>
         </div>
     </div>
-
     <script>
         function updateTime() {
             const now = new Date();
@@ -455,6 +480,7 @@ $sidangStatus = \App\Models\CheckinPihak::where('perkara_id', $p->perkara_id)
         setInterval(updateTime, 1000);
         updateTime();
     </script>
+
 </body>
 
 </html>
