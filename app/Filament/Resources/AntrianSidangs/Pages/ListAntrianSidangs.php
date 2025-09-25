@@ -141,6 +141,9 @@ class ListAntrianSidangs extends ListRecords
                 TextColumn::make('hakim_ketua')
                     ->searchable()
                     ->label('Hakim'),
+                TextColumn::make('panitera_active')
+                    ->searchable()
+                    ->label('PP'),
                 TextColumn::make('status_sidang')
                     ->badge()
                     ->color(function (Perkara $record) {

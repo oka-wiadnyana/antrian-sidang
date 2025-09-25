@@ -20,6 +20,11 @@ class Perkara extends Model
         return $this->hasMany(PerkaraHakimPn::class, 'perkara_id', 'perkara_id');
     }
 
+    public function panitera()
+    {
+        return $this->hasMany(PerkaraPaniteraPn::class, 'perkara_id', 'perkara_id');
+    }
+
     public function jadwal()
     {
         return $this->hasMany(PerkaraJadwalSidang::class, 'perkara_id', 'perkara_id');
@@ -42,6 +47,14 @@ class Perkara extends Model
 
         $first = $this->hakim()->first();
         return $first ? ($first->hakim_nama ?? 'Hakim Tunggal') : 'Belum ditetapkan';
+    }
+
+    public function getPaniteraActiveAttribute()
+    {
+
+        $first = $this->panitera()->first();
+
+        return $first ? $first->panitera_nama  : 'Belum ditetapkan';
     }
 
     // ✅ LOGIKA BISNIS: Cek Kelengkapan

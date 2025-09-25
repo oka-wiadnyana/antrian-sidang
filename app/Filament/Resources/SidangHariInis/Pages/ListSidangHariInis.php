@@ -65,7 +65,7 @@ class ListSidangHariInis extends ListRecords
         // Ambil dan gabungkan data...
         $perkaraHariIni = static::getResource()::getEloquentQuery()
             ->whereHas('jadwal', fn($q) => $q->whereDate('tanggal_sidang', $now))
-            ->with(['hakim' => fn($q) => $q->where('jabatan_hakim_id', 1)])
+            ->with(['hakim' => fn($q) => $q->where('jabatan_hakim_id', 1), 'panitera'])
             ->get();
 
 
@@ -83,17 +83,14 @@ class ListSidangHariInis extends ListRecords
                 return $hakim && $hakim->hakim_nama === $selectedTab;
             }
         });
-
+        // dd($filteredPerkara);
         // Langkah 5: Urutkan data berdasarkan waktu check-in
         return $filteredPerkara->sortBy('hakim_ketua');
-
-        // Langkah 5: Urutkan data yang sudah difilter
-        return $filteredPerkara;
     }
     public  function table(Table $table): Table
     {
         return $table
-            ->query(static::getResource()::getEloquentQuery())
+            // ->query(static::getResource()::getEloquentQuery())
             ->columns([
                 TextColumn::make('nomor_perkara')
                     ->searchable()
@@ -114,6 +111,11 @@ class ListSidangHariInis extends ListRecords
                 TextColumn::make('hakim_ketua')
                     ->searchable()
                     ->label('Hakim'),
+
+                TextColumn::make('panitera_active')
+                    // ->state(fn($state, $record) => $record->panitera_active ?? "")
+                    ->searchable()
+                    ->label('PP'),
 
             ])
             ->filters([])
