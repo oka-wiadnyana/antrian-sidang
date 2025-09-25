@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\RefreshQueuePage;
 use App\Models\Perkara;
 use App\Models\CheckinPihak;
 use App\Models\PerkaraJadwalSidang;
@@ -57,7 +56,6 @@ class CheckinPublicController extends Controller
             'waktu_checkin' => now(),
         ]);
 
-        event(new RefreshQueuePage());
         return response()->json(['success' => 'Laporan kehadiran berhasil!']);
     }
 
