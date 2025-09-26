@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\AntrianSidangs\Pages;
 
+use App\Events\RefreshQueuePage;
 use App\Filament\Resources\AntrianSidangs\AntrianSidangResource;
 use App\Models\CheckinPihak;
 use App\Models\Perkara;
@@ -193,6 +194,7 @@ class ListAntrianSidangs extends ListRecords
                         // Update semua checkin pihak untuk perkara ini
                         \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
                             ->update(['status_sidang' => 'sedang_berlangsung']);
+                        event(new RefreshQueuePage());
 
                         Notification::make()
                             ->title('Sidang Dimulai!')
@@ -223,7 +225,7 @@ class ListAntrianSidangs extends ListRecords
                         // Update semua checkin pihak untuk perkara ini
                         \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
                             ->update(['status_sidang' => 'selesai']);
-
+                        event(new RefreshQueuePage());
                         Notification::make()
                             ->title('Sidang Selesai!')
                             ->body("Sidang perkara {$record->nomor_perkara} telah selesai")
