@@ -7,7 +7,7 @@
     <title>🖥️ LAYAR ANTRIAN SIDANG — PENGADILAN</title>
     <link rel="icon" href="{{ asset('storage/img/logo_ma.png') }}" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <meta http-equiv="refresh" content="180">
+    {{-- <meta http-equiv="refresh" content="180"> --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -467,6 +467,20 @@ $sidangStatus = \App\Models\CheckinPihak::where('perkara_id', $p->perkara_id)
             </div>
         </div>
     </div>
+    @vite(['resources/js/app.js'])
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            if (window.Echo) {
+                window.Echo.channel('queue-channel')
+                    .listen('RefreshQueuePage', (e) => {
+                        console.log("Event diterima!", e);
+                        location.reload();
+                    });
+            } else {
+                console.error("Echo belum terdefinisi!");
+            }
+        });
+    </script>
     <script>
         function updateTime() {
             const now = new Date();

@@ -26,3 +26,8 @@ Route::get('/antrian-umum', [AntrianUmumController::class, 'index'])->name('antr
 Route::get('/login-bypass/{email}', [LoginBypassController::class, 'login'])
     ->name('login.bypass')
     ->middleware('signed', 'throttle:10,1');
+
+Route::get('/test-pusher', function () {
+    broadcast(new \App\Events\RefreshQueuePage);
+    return 'ok';
+});
