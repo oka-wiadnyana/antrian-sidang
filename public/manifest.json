@@ -1,0 +1,39 @@
+{
+    "name": "Lapor Kehadiran Sidang",
+    "short_name": "LaporSidang",
+    "start_url": "/",
+    "background_color": "#6777ef",
+    "description": "Sistem Lapor Kehadiran Sidang Pengadilan",
+    "display": "standalone",
+    "theme_color": "#6777ef",
+    "icons": [
+        {
+            "src": "logo/logo192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "logo/logo512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "logo/logo512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Mobile view"
+        },
+        {
+            "src": "logo/logo512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Desktop view"
+        }
+    ]
+}

@@ -3,6 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="theme-color" content="#6777ef" />
+    <link rel="apple-touch-icon" href="{{ asset('logo.png') }}">
+    <link rel="manifest" href="{{ asset('/manifest.json') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lapor Kehadiran Sidang — Pengadilan</title>
     <link rel="icon" href="{{ asset('storage/img/logo_ma.png') }}" type="image/x-icon">
@@ -63,10 +66,90 @@
             border: none;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
         }
+
+        /* .pwa-install-floating {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            position: relative;
+            z-index: 1000;
+            display: none;
+        }
+
+        .pwa-install-floating:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px rgba(102, 126, 234, 0.6);
+        }
+
+        .pwa-install-floating:active {
+            transform: translateY(-2px);
+        }
+
+        .install-shine {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s;
+            opacity: 0;
+        }
+
+        .pwa-install-floating:hover .install-shine {
+            animation: shine 1.5s ease-in-out;
+        }
+
+        @keyframes shine {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+                opacity: 0;
+            }
+        } */
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
     </style>
 </head>
 
 <body>
+    <!-- Add this inside <body> -->
+
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-lg-8">
@@ -220,6 +303,10 @@
 
                     </div>
                     <div class="card-footer bg-white text-center py-3 flex flex-col">
+                        <button id="pwa-install-btn" class="btn btn-gradient mb-3" style="display:none;">
+                            <i class="bi bi-download me-2"></i>Install App
+                            <div class="install-shine"></div>
+                        </button>
                         <div style="width: 100%">
 
                             <a href="{{ url('antrian-umum') }}" class="btn btn-warning " style="width: 100%"
@@ -699,6 +786,24 @@
             });
         });
     </script>
+    <script src="{{ asset('/sw.js') }}"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            // Register a service worker hosted at the root of the
+            // site using the default scope.
+            navigator.serviceWorker.register("/sw.js").then(
+                (registration) => {
+                    console.log("Service worker registration succeeded:", registration);
+                },
+                (error) => {
+                    console.error(`Service worker registration failed: ${error}`);
+                },
+            );
+        } else {
+            console.error("Service workers are not supported.");
+        }
+    </script>
+    <script src="{{ asset('pwa-install.js') }}"></script>
 </body>
 
 </html>

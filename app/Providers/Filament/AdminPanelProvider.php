@@ -29,6 +29,45 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->renderHook(
+                'panels::head.end',
+                fn(): string => '
+                <meta name="theme-color" content="#1f2937"/>
+                <link rel="apple-touch-icon" href="' . asset('logo/logo192.png') . '">
+                <link rel="manifest" href="' . asset('/admin-manifest.json') . '">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+            '
+            )
+            ->renderHook(
+                'panels::body.end',
+                fn(): string => '
+                <button id="pwa-install-btn" style="
+                    display: none;
+                    position: fixed;
+                    top: 80px;
+                    right: 20px;
+                    width: 50px;
+                    height: 50px;
+                    background: linear-gradient(135deg, #1f2937, #374151);
+                    color: white;
+                    border: none;
+                    border-radius: 50%;
+                    box-shadow: 0 4px 15px rgba(31, 41, 55, 0.3);
+                    cursor: pointer;
+                    z-index: 9999;
+                    font-size: 18px;
+                ">
+                    <i class="bi bi-download"></i>
+                </button>
+                <script src="' . asset('/sw.js') . '"></script>
+                <script src="' . asset('pwa-install.js') . '"></script>
+                <script>
+                    if ("serviceWorker" in navigator) {
+                        navigator.serviceWorker.register("/sw.js");
+                    }
+                </script>
+            '
+            )
             ->resources([
                 // \App\Filament\Resources\PerkaraResource::class,
                 // \App\Filament\Resources\CheckinPihakResource::class,
