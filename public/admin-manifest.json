@@ -1,6 +1,6 @@
 {
-    "name": "Admin Panel Pengadilan",
-    "short_name": "AdminPanel",
+    "name": "Admin Antrian Pengadilan",
+    "short_name": "AdminAntrian",
     "start_url": "/admin",
     "scope": "/admin/",
     "display": "standalone",
