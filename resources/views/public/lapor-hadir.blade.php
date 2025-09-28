@@ -295,7 +295,7 @@
                                     <i class="bi bi-arrow-left"></i> Kembali
                                 </button>
                                 <button type="submit" class="btn btn-warning">
-                                    <i class="bi bi-check-circle"></i> Konfirmasi kedaieran
+                                    <i class="bi bi-check-circle"></i> Konfirmasi kehadiran
                                 </button>
                             </div>
                         </form>
