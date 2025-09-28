@@ -148,12 +148,14 @@ class Perkara extends Model
     // ✅ LOGIKA BISNIS: Waktu Mulai Sesi
     public function getWaktuMulaiSesiAttribute()
     {
+        $hearing_time = HearingTime::where('jenis_perkara', $this->jenis_perkara)->first()->toArray();
+
         return match ($this->jenis_perkara) {
-            'permohonan' => '09:00:00',
-            'gugatan_sederhana' => '11:00:00',
-            'gugatan_cerai' => '11:00:00',
-            'gugatan_non_cerai' => '14:00:00',
-            'pidana' => '14:00:00',
+            'permohonan' => $hearing_time['time'] ?? '09:00:00',
+            'gugatan_sederhana' => $hearing_time['time'] ?? '11:00:00',
+            'gugatan_cerai' => $hearing_time['time'] ??  '11:00:00',
+            'gugatan_non_cerai' => $hearing_time['time'] ?? '14:00:00',
+            'pidana' => $hearing_time['time'] ?? '14:00:00',
             default => '09:00:00'
         };
     }
