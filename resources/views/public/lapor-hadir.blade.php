@@ -319,10 +319,52 @@
             </div>
         </div>
     </div>
+    <!-- Modal -->
+    <div class="modal fade" id="modalStep1" tabindex="-1" aria-labelledby="modalStep1Label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalStep1Label">Disclaimer!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Dimohon untuk menginput dengan data pihak yang telah hadir. Mohon tidak memasukkan data kehadiran
+                    yang bukan data pihak yang hadir!
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalStep2" tabindex="-1" aria-labelledby="modalStep2Label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalStep2Label">Perhatian!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Sebelum input data kehadiran, agar dipastikan apabila acara persidangan pada hari ini adalah untuk
+                    pemeriksaan bukti surat, agar telah mengupload bukti surat yang telah di <i>nazegelen</i>, dan/atau
+                    jika pada persidangan hari ini adalah untuk pemeriksaan saksi-saksi, agar saksi-saksi tersebut telah
+                    siap!
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="{{ asset('js/jquery-3.6.0.min.js') }}"></script>
     <script src="{{ asset('js/selectize.min.js') }}"></script>
     <script src="{{ asset('js/leaflet.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous">
+    </script>
+
     <script>
         const PENGADILAN_LAT = {{ env('PENGADILAN_LATITUDE', -6.2088) }};
         const PENGADILAN_LNG = {{ env('PENGADILAN_LONGITUDE', 106.8456) }};
@@ -646,6 +688,14 @@
 
         // ========== EVENT LISTENER DELEGASI ==========
         $(document).ready(function() {
+            const modalStep1El = document.getElementById('modalStep1');
+
+            // 2. Inisialisasi objek Modal Bootstrap
+            // Pastikan Anda telah menyertakan file Bootstrap JavaScript Anda
+            const modalStep1 = new bootstrap.Modal(modalStep1El);
+
+            // 3. Tampilkan modal
+            modalStep1.show();
             setTimeout(() => {
                 initMap();
                 initGeolocation();
@@ -657,6 +707,14 @@
             $(document).on('click', '#btn-next-step1', function() {
                 $('#step1').removeClass('active');
                 $('#step2').addClass('active');
+                const modalStep2El = document.getElementById('modalStep2');
+
+                // 2. Inisialisasi objek Modal Bootstrap
+                // Pastikan Anda telah menyertakan file Bootstrap JavaScript Anda
+                const modalStep2 = new bootstrap.Modal(modalStep2El);
+
+                // 3. Tampilkan modal
+                modalStep2.show();
             });
 
             // Step 2 → Step 3
