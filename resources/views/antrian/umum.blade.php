@@ -328,7 +328,8 @@
             <div class="queue-content">
                 @if ($antrian->count() > 0)
                     @php
-                        $no = 1;
+                        // 1. Inisialisasi variabel penomor Majelis HANYA SEKALI
+                        $majelisNo = 1;
                     @endphp
                     @foreach ($antrian as $kelompok => $perkaraList)
                         <div
@@ -340,16 +341,16 @@
                             @else header-lain @endif">
                             @if ($kelompok === 'PERMOHONAN')
                                 <i class="fas fa-file-alt"></i> PERMOHONAN
-                                @php
+                                {{-- @php
                                     $no = $no;
-                                @endphp
+                                @endphp --}}
                             @elseif($kelompok === 'GUGATAN SEDERHANA')
                                 <i class="fas fa-balance-scale"></i> GUGATAN SEDERHANA
-                                @php
+                                {{-- @php
                                     $no = $no;
-                                @endphp
+                                @endphp --}}
                             @else
-                                <i class="fas fa-user-tie"></i> Majelis Hakim {{ $no++ }}
+                                <i class="fas fa-user-tie"></i> Majelis Hakim {{ $majelisNo++ }}
                             @endif
                         </div>
 
@@ -406,6 +407,10 @@ $sidangStatus = \App\Models\CheckinPihak::where('perkara_id', $p->perkara_id)
             <!-- Duplikat untuk scroll seamless -->
             <div class="queue-content">
                 @if ($antrian->count() > 0)
+                    @php
+                        // 1. Inisialisasi variabel penomor Majelis HANYA SEKALI
+                        $majelisNo = 1;
+                    @endphp
                     @foreach ($antrian as $kelompok => $perkaraList)
                         <div
                             class="section-header 
@@ -419,7 +424,7 @@ $sidangStatus = \App\Models\CheckinPihak::where('perkara_id', $p->perkara_id)
                             @elseif($kelompok === 'GUGATAN SEDERHANA')
                                 <i class="fas fa-balance-scale"></i> GUGATAN SEDERHANA
                             @else
-                                <i class="fas fa-user-tie"></i> {{ strtoupper($kelompok) }}
+                                <i class="fas fa-user-tie"></i> Majelis Hakim {{ $majelisNo++ }}
                             @endif
                         </div>
 
