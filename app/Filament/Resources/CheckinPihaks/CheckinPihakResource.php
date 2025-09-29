@@ -8,6 +8,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use BackedEnum;
+use Filament\Actions\DeleteAction;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TernaryFilter;
 use Illuminate\Database\Eloquent\Builder;
@@ -43,7 +44,10 @@ class CheckinPihakResource extends Resource
                 Tables\Columns\TextColumn::make('waktu_checkin')->dateTime(),
                 Tables\Columns\TextColumn::make('jarak_meter')->sortable(),
             ])
-            ->filters([]);
+            ->filters([])
+            ->recordActions([
+                DeleteAction::make(),
+            ]);
     }
 
     public static function getPages(): array

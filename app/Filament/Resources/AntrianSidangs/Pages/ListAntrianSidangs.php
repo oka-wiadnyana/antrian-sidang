@@ -8,6 +8,7 @@ use App\Models\CheckinPihak;
 use App\Models\Perkara;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
@@ -15,8 +16,11 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Mockery\Matcher\Not;
 
 class ListAntrianSidangs extends ListRecords
 {
@@ -103,6 +107,7 @@ class ListAntrianSidangs extends ListRecords
         // --- DI SINI ANDA MENAMBAHKAN FILTER TAMBAHAN ---
         // Filter untuk hanya menampilkan perkara yang memiliki check-in
         $filteredPerkara = $filteredPerkara->filter(fn($perkara) => $perkara->checkins->isNotEmpty());
+        // dd($filteredPerkara);
 
         // Langkah 5: Urutkan data berdasarkan waktu check-in
         return $filteredPerkara->sortBy(function ($perkara) {
@@ -113,15 +118,15 @@ class ListAntrianSidangs extends ListRecords
             // Pastikan ada data checkin sebelum mencoba mengakses propertinya
             return $checkin ? $checkin->waktu_checkin : null;
         })->sortBy('hakim_ketua');
-
+        // dd($filteredPerkara);
         // Langkah 5: Urutkan data yang sudah difilter
-        return $filteredPerkara;
+        // return $filteredPerkara;
     }
 
     public  function table(Table $table): Table
     {
         return $table
-            ->query(static::getResource()::getEloquentQuery())
+            // ->query(static::getResource()::getEloquentQuery())
             ->columns([
                 TextColumn::make('nomor_perkara')
                     ->searchable()
@@ -314,6 +319,7 @@ class ListAntrianSidangs extends ListRecords
                         // Optional: Trigger suara (jika ada)
                         $this->dispatch('play-panggilan-sidang');
                     }),
+
 
             ])
             ->paginated(false);
