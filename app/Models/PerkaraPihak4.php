@@ -8,4 +8,8 @@ class PerkaraPihak4 extends Model
 {
     protected $connection = 'sipp';
     protected $table = 'perkara_pihak4';
+    public function pihak()
+    {
+        return $this->belongsTo(PihakMain::class, 'pihak_id');
+    }
 }

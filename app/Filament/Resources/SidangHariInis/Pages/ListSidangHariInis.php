@@ -8,6 +8,7 @@ use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Collection;
 
@@ -100,14 +101,24 @@ class ListSidangHariInis extends ListRecords
             ->orWherehas('jadwalPk', function ($q) use ($now) {
                 $q->whereDate('tanggal_pemeriksaan', $now);
             })
-            ->with(['hakim' => fn($q) => $q->where('jabatan_hakim_id', 1), 'mediasi', 'jadwalMediasi' => function ($q) use ($now) {
-                $q->whereDate('tanggal_mediasi', $now);
-            }, 'jadwalPk' => function ($q) use ($now) {
-                $q->whereDate('tanggal_pemeriksaan', $now);
-            }, 'jadwal' => function ($q) use ($now) {
-                $q->whereDate('tanggal_sidang', $now);
-            }])
+            ->with([
+                'hakim' => fn($q) => $q->where('jabatan_hakim_id', 1),
+                'mediasi',
+                'jadwalMediasi' => function ($q) use ($now) {
+                    $q->whereDate('tanggal_mediasi', $now);
+                },
+                'jadwalPk' => function ($q) use ($now) {
+                    $q->whereDate('tanggal_pemeriksaan', $now);
+                },
+                'jadwal' => function ($q) use ($now) {
+                    $q->whereDate('tanggal_sidang', $now);
+                },
+                'pihak1',
+                'pihak2',
+                'pihak_pengacara'
+            ])
             ->get();
+        // dd($perkaraHariIni->pluck('pihak1')->first()->pihak()->telepon);
         $perkaraIds = $perkaraHariIni->pluck('perkara_id');
         $allCheckins = CheckinPihak::whereIn('perkara_id', $perkaraIds)
             ->whereDate('waktu_checkin', $now)
@@ -193,9 +204,83 @@ class ListSidangHariInis extends ListRecords
 
                         // Berikan nilai default jika $agenda masih null
                         return $agenda ?? 'Sidang Lanjutan (Jadwal Belum Ditetapkan)';
-                    })
-                    ->searchable()
-                    ->label('Agenda'),
+                    }),
+                // TextColumn::make('pihak1_telepon') // Beri nama kolom yang unik
+                //     ->label('Kontak Pihak 1')
+                //     ->html() // Penting: agar kode HTML Anda dirender
+                //     ->getStateUsing(function ($record) {
+                //         $html = '';
+
+                //         // Memeriksa apakah relasi pihak1 ada dan tidak kosong
+                //         if ($record->pihak1->isNotEmpty()) {
+                //             foreach ($record->pihak1 as $pihak1Item) {
+                //                 // Pastikan atribut 'telepon' ada dan tidak kosong
+                //                 if (!empty($pihak1Item->pihak->telepon)) {
+                //                     // dd($pihak1Item->pihak->telepon);
+                //                     // Logika preg_replace('/^0/', '62', $t['telepon'])
+                //                     $cleanNumber = preg_replace('/^0/', '62', $pihak1Item->pihak->telepon);
+                //                     $whatsappLink = "https://wa.me/{$cleanNumber}";
+
+                //                     // Membuat HTML yang diinginkan
+                //                     $nama = $pihak1Item->nama ?? 'Nomor Telepon';
+
+                //                     // Menggunakan Filament/Tailwind CSS class untuk styling
+                //                     // Anda bisa menyesuaikan styling ini
+                //                     $html .= "
+                //                 <a href='{$whatsappLink}' target='_blank' class='text-decoration-none'>
+                //                     <div class='mb-1 inline-flex items-center space-x-2 px-3 py-1 bg-white border border-green-500 text-green-700 rounded-full shadow-sm hover:bg-gray-50 transition text-xs font-semibold'>
+
+
+                //                         <svg class='w-4 h-4' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor'>
+                //                             <path stroke-linecap='round' stroke-linejoin='round' d='M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9 0h2.25V7.5M3.75 6h16.5' />
+                //                         </svg>
+
+                //                         <span>{$nama}</span>
+                //                     </div>
+                //                 </a>
+                //             ";
+                //                 }
+                //             }
+                //         }
+
+                //         if ($record->pihak2->isNotEmpty()) {
+                //             foreach ($record->pihak2 as $pihak2Item) {
+                //                 // Pastikan atribut 'telepon' ada dan tidak kosong
+                //                 if (!empty($pihak2Item->pihak->telepon)) {
+                //                     // dd($pihak2Item->pihak->telepon);
+                //                     // Logika preg_replace('/^0/', '62', $t['telepon'])
+                //                     $cleanNumber = preg_replace('/^0/', '62', $pihak2Item->pihak->telepon);
+                //                     $whatsappLink = "https://wa.me/{$cleanNumber}";
+
+                //                     // Membuat HTML yang diinginkan
+                //                     $nama = $pihak2Item->nama ?? 'Nomor Telepon';
+
+                //                     // Menggunakan Filament/Tailwind CSS class untuk styling
+                //                     // Anda bisa menyesuaikan styling ini
+                //                     $html .= "
+                //                     <a href='{$whatsappLink}' target='_blank' class='text-decoration-none'>
+                //                         <div class='mb-1 inline-flex items-center space-x-2 px-3 py-1 bg-white border border-green-500 text-green-700 rounded-full shadow-sm hover:bg-gray-50 transition text-xs font-semibold'>
+
+
+                //                             <svg class='w-4 h-4' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor'>
+                //                                 <path stroke-linecap='round' stroke-linejoin='round' d='M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9 0h2.25V7.5M3.75 6h16.5' />
+                //                             </svg>
+
+                //                             <span>{$nama}</span>
+                //                         </div>
+                //                     </a>
+                //                 ";
+                //                 }
+                //             }
+                //         }
+                //         return $html;
+                //     }),
+
+
+                ViewColumn::make('kontak')
+                    ->label('Kontak')
+                    ->view('tables.columns.kontak'),
+
 
             ])
             ->filters([])

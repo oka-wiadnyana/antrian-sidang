@@ -234,6 +234,10 @@ class Perkara extends Model
     {
         return $this->hasMany(PerkaraPihak5::class, 'perkara_id', 'perkara_id');
     }
+    public function pihak_pengacara() // biarkan jika masih dipakai, atau hapus jika tidak
+    {
+        return $this->hasMany(PerkaraPihakKuasa::class, 'perkara_id', 'perkara_id');
+    }
 
     // Cek apakah ADA pihak yang sudah check-in
     public function adaCheckin()
