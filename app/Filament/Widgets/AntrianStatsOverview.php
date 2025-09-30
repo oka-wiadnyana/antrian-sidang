@@ -3,8 +3,11 @@
 namespace App\Filament\Widgets;
 
 use App\Models\CheckinPihak;
+use App\Models\HearingTime;
 use App\Models\Perkara;
+use App\Models\PerkaraJadwalPemeriksaanPk;
 use App\Models\PerkaraJadwalSidang;
+use App\Models\PerkaraMediasi;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Collection;
@@ -15,6 +18,8 @@ class AntrianStatsOverview extends BaseWidget
     protected function getStats(): array
     {
         $today = now()->format('Y-m-d');
+        $hearingTime = HearingTime::all()->pluck('time', 'jenis_perkara')->toArray();
+        // dd($hearingTime);
         $perkaraIdsYangHadir = CheckinPihak::query()
             ->whereDate('waktu_checkin', now())
             ->whereNotNull('waktu_checkin')
@@ -22,84 +27,196 @@ class AntrianStatsOverview extends BaseWidget
             ->unique();
 
         // Langkah 2: Ambil semua PerkaraJadwalSidang berdasarkan ID yang sudah difilter
-        if (now()->hour >= 9) {
-            $perkaraPermohonanHadir = PerkaraJadwalSidang::query()
-                ->whereIn('perkara_id', $perkaraIdsYangHadir)
-                ->where('tanggal_sidang', $today)
-                ->whereHas('perkara', function ($q) {
-                    $q->where('alur_perkara_id', 2);
-                })
-                // Gunakan with() untuk eager load relasi yang sudah difilter
-                ->with('perkara')
-                ->get();
-        } else {
-            $perkaraPermohonanHadir = new Collection();
+        foreach ($hearingTime as $key => $value) {
+            if ($key == 'permohonan') {
+                if (now()->toTimeString() >= $value) {
+                    $perkaraPermohonanHadir = PerkaraJadwalSidang::query()
+                        ->whereIn('perkara_id', $perkaraIdsYangHadir)
+                        ->where('tanggal_sidang', $today)
+                        ->whereHas('perkara', function ($q) {
+                            $q->where('alur_perkara_id', 2);
+                        })
+                        // Gunakan with() untuk eager load relasi yang sudah difilter
+                        ->with('perkara')
+                        ->get();
+                } else {
+                    $perkaraPermohonanHadir = new Collection();
+                }
+            }
+
+            if ($key == 'permohonan') {
+                if (now()->hour >= $value) {
+                    $perkaraGsHadir = PerkaraJadwalSidang::query()
+                        ->whereIn('perkara_id', $perkaraIdsYangHadir)
+                        ->where('tanggal_sidang', $today)
+                        ->whereHas('perkara', function ($q) {
+                            $q->where('alur_perkara_id', 8);
+                        })
+                        // Gunakan with() untuk eager load relasi yang sudah difilter
+                        ->with('perkara')
+                        ->get();
+                } else {
+                    $perkaraGsHadir = new Collection();
+                }
+            }
+            if ($key == 'gugatan_cerai') {
+
+                if (now()->hour >= $value) {
+
+                    $perkaraCeraihadir = PerkaraJadwalSidang::query()
+                        ->whereIn('perkara_id', $perkaraIdsYangHadir)
+                        ->where('tanggal_sidang', $today)
+                        ->whereHas('perkara', function ($q) {
+                            $q->where('alur_perkara_id', 1);
+                            $q->where('jenis_perkara_id', 64);
+                        })
+                        // Gunakan with() untuk eager load relasi yang sudah difilter
+                        ->with('perkara')
+                        ->get();
+                } else {
+                    $perkaraCeraihadir = new Collection();
+                }
+            }
+            if ($key == 'gugatan_non_cerai') {
+
+                if (now()->hour >= $value) {
+
+                    $perkaraNonCeraihadir = PerkaraJadwalSidang::query()
+                        ->whereIn('perkara_id', $perkaraIdsYangHadir)
+                        ->where('tanggal_sidang', $today)
+                        ->whereHas('perkara', function ($q) {
+                            $q->where(function ($q) {
+                                $q->where('alur_perkara_id', 1);
+                                $q->orWhere('alur_perkara_id', 7);
+                            });
+                            $q->where('jenis_perkara_id', '!=', 64);
+                        })
+                        // Gunakan with() untuk eager load relasi yang sudah difilter
+                        ->with('perkara')
+                        ->get();
+                } else {
+                    $perkaraNonCeraihadir = new Collection();
+                }
+            }
+            if ($key == 'pidana') {
+
+                if (now()->hour >= $value) {
+
+                    $perkaraPidanahadir = PerkaraJadwalSidang::query()
+                        ->whereIn('perkara_id', $perkaraIdsYangHadir)
+                        ->where('tanggal_sidang', $today)
+                        ->whereHas('perkara', function ($q) {
+
+                            $q->where('alur_perkara_id', 111);
+                            $q->orWhere('alur_perkara_id', 117);
+                            $q->orWhere('alur_perkara_id', 118);
+                        })
+                        // Gunakan with() untuk eager load relasi yang sudah difilter
+                        ->with('perkara')
+                        ->get();
+                } else {
+                    $perkaraPidanahadir = new Collection();
+                }
+            }
+            if ($key == 'mediasi') {
+
+                if (now()->hour >= $value) {
+
+                    $perkaraMediasihadir = PerkaraMediasi::query()
+                        ->whereHas('jadwalMediasi', function ($q) use ($today) {
+                            $q->where('tanggal_mediasi', $today);
+                        })
+                        ->whereIn('perkara_id', $perkaraIdsYangHadir)
+
+                        // Gunakan with() untuk eager load relasi yang sudah difilter
+                        ->with('perkara')
+                        ->get();
+                } else {
+                    $perkaraMediasihadir = new Collection();
+                }
+            }
+            if ($key == 'pk') {
+
+                if (now()->hour >= $value) {
+
+                    $perkaraPkhadir = PerkaraJadwalPemeriksaanPk::query()
+                        ->where('tanggal_pemeriksaan', $today)
+                        ->whereIn('perkara_id', $perkaraIdsYangHadir)
+
+                        // Gunakan with() untuk eager load relasi yang sudah difilter
+                        ->with('perkara')
+                        ->get();
+                } else {
+                    $perkaraPkhadir = new Collection();
+                }
+            }
         }
-        if (now()->hour >= 9) {
-            $perkaraGsHadir = PerkaraJadwalSidang::query()
-                ->whereIn('perkara_id', $perkaraIdsYangHadir)
-                ->where('tanggal_sidang', $today)
-                ->whereHas('perkara', function ($q) {
-                    $q->where('alur_perkara_id', 8);
-                })
-                // Gunakan with() untuk eager load relasi yang sudah difilter
-                ->with('perkara')
-                ->get();
-        } else {
-            $perkaraGsHadir = new Collection();
-        }
 
-        if (now()->hour >= 11) {
+        // if (now()->hour >= 9) {
+        //     $perkaraGsHadir = PerkaraJadwalSidang::query()
+        //         ->whereIn('perkara_id', $perkaraIdsYangHadir)
+        //         ->where('tanggal_sidang', $today)
+        //         ->whereHas('perkara', function ($q) {
+        //             $q->where('alur_perkara_id', 8);
+        //         })
+        //         // Gunakan with() untuk eager load relasi yang sudah difilter
+        //         ->with('perkara')
+        //         ->get();
+        // } else {
+        //     $perkaraGsHadir = new Collection();
+        // }
 
-            $perkaraCeraihadir = PerkaraJadwalSidang::query()
-                ->whereIn('perkara_id', $perkaraIdsYangHadir)
-                ->where('tanggal_sidang', $today)
-                ->whereHas('perkara', function ($q) {
-                    $q->where('alur_perkara_id', 1);
-                    $q->where('jenis_perkara_id', 64);
-                })
-                // Gunakan with() untuk eager load relasi yang sudah difilter
-                ->with('perkara')
-                ->get();
-        } else {
-            $perkaraCeraihadir = new Collection();
-        }
+        // if (now()->hour >= 11) {
 
-        if (now()->hour >= 14) {
+        //     $perkaraCeraihadir = PerkaraJadwalSidang::query()
+        //         ->whereIn('perkara_id', $perkaraIdsYangHadir)
+        //         ->where('tanggal_sidang', $today)
+        //         ->whereHas('perkara', function ($q) {
+        //             $q->where('alur_perkara_id', 1);
+        //             $q->where('jenis_perkara_id', 64);
+        //         })
+        //         // Gunakan with() untuk eager load relasi yang sudah difilter
+        //         ->with('perkara')
+        //         ->get();
+        // } else {
+        //     $perkaraCeraihadir = new Collection();
+        // }
 
-            $perkaraNonCeraihadir = PerkaraJadwalSidang::query()
-                ->whereIn('perkara_id', $perkaraIdsYangHadir)
-                ->where('tanggal_sidang', $today)
-                ->whereHas('perkara', function ($q) {
-                    $q->where(function ($q) {
-                        $q->where('alur_perkara_id', 1);
-                        $q->orWhere('alur_perkara_id', 7);
-                    });
-                    $q->where('jenis_perkara_id', '!=', 64);
-                })
-                // Gunakan with() untuk eager load relasi yang sudah difilter
-                ->with('perkara')
-                ->get();
-        } else {
-            $perkaraNonCeraihadir = new Collection();
-        }
+        // if (now()->hour >= 14) {
 
-        if (now()->hour >= 14) {
-            $perkaraPidanahadir = PerkaraJadwalSidang::query()
-                ->whereIn('perkara_id', $perkaraIdsYangHadir)
-                ->where('tanggal_sidang', $today)
-                ->whereHas('perkara', function ($q) {
+        //     $perkaraNonCeraihadir = PerkaraJadwalSidang::query()
+        //         ->whereIn('perkara_id', $perkaraIdsYangHadir)
+        //         ->where('tanggal_sidang', $today)
+        //         ->whereHas('perkara', function ($q) {
+        //             $q->where(function ($q) {
+        //                 $q->where('alur_perkara_id', 1);
+        //                 $q->orWhere('alur_perkara_id', 7);
+        //             });
+        //             $q->where('jenis_perkara_id', '!=', 64);
+        //         })
+        //         // Gunakan with() untuk eager load relasi yang sudah difilter
+        //         ->with('perkara')
+        //         ->get();
+        // } else {
+        //     $perkaraNonCeraihadir = new Collection();
+        // }
 
-                    $q->where('alur_perkara_id', 111);
-                    $q->orWhere('alur_perkara_id', 117);
-                    $q->orWhere('alur_perkara_id', 118);
-                })
-                // Gunakan with() untuk eager load relasi yang sudah difilter
-                ->with('perkara')
-                ->get();
-        } else {
-            $perkaraPidanahadir = new Collection();
-        }
+        // if (now()->hour >= 14) {
+        //     $perkaraPidanahadir = PerkaraJadwalSidang::query()
+        //         ->whereIn('perkara_id', $perkaraIdsYangHadir)
+        //         ->where('tanggal_sidang', $today)
+        //         ->whereHas('perkara', function ($q) {
+
+        //             $q->where('alur_perkara_id', 111);
+        //             $q->orWhere('alur_perkara_id', 117);
+        //             $q->orWhere('alur_perkara_id', 118);
+        //         })
+        //         // Gunakan with() untuk eager load relasi yang sudah difilter
+        //         ->with('perkara')
+        //         ->get();
+        // } else {
+        //     $perkaraPidanahadir = new Collection();
+        // }
         // // Langkah 3: Lakukan eager loading 'checkins' secara manual
         // // Ambil semua checkins yang relevan dari database terpisah
         // $checkins = CheckinPihak::query()
@@ -151,6 +268,16 @@ class AntrianStatsOverview extends BaseWidget
                 ->descriptionIcon('heroicon-m-sparkles')
                 ->color('danger')
                 ->chart([2, 5, 3, 8, 6, 11, 7]),
+            Stat::make('Mediasi', $perkaraMediasihadir->count())
+                ->description('Siap mediasi hari ini')
+                ->descriptionIcon('heroicon-m-sparkles')
+                ->color('success')
+                ->chart([2, 5, 3, 8, 6, 11, 7]),
+            Stat::make('PK', $perkaraPkhadir->count())
+                ->description('Siap sidang hari ini')
+                ->descriptionIcon('heroicon-m-heart')
+                ->color('warning')
+                ->chart([3, 8, 5, 12, 7, 16, 9]),
         ];
     }
 }
