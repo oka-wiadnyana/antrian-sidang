@@ -33,16 +33,40 @@ class ListAntrianSidangs extends ListRecords
             ->whereHas('jadwal', function ($q) use ($now) {
                 $q->whereDate('tanggal_sidang', $now);
             })
+            ->orWherehas('jadwalMediasi', function ($q) use ($now) {
+                $q->whereDate('tanggal_mediasi', $now);
+            })
+            ->orWherehas('jadwalPk', function ($q) use ($now) {
+                $q->whereDate('tanggal_pemeriksaan', $now);
+            })
             ->with(['hakim' => fn($q) => $q->where('jabatan_hakim_id', 1)])
             ->get();
 
+        $perkaraIds = $perkaraHariIni->pluck('perkara_id');
+        $allCheckins = CheckinPihak::whereIn('perkara_id', $perkaraIds)
+            ->get()
+            ->groupBy('perkara_id');
+
+
+
         $hakimKeys = collect();
         foreach ($perkaraHariIni as $perkara) {
-            $key = match ($perkara->alur_perkara_id) {
-                2 => 'permohonan',
-                8 => 'gugatan_sederhana',
-                default => optional($perkara->hakim->first())->hakim_nama ?? 'Hakim Tidak Ditemukan',
-            };
+            $perkara->setRelation(
+                'checkins',
+                $allCheckins->get($perkara->perkara_id, collect())
+            );
+            if ($perkara->checkins->contains('jenis_sidang', 'mediasi')) {
+                $key = 'mediasi';
+            } elseif ($perkara->checkins->contains('jenis_sidang', 'pk')) {
+                $key = 'pk';
+            } else {
+
+                $key = match ($perkara->alur_perkara_id) {
+                    2 => 'permohonan',
+                    8 => 'gugatan_sederhana',
+                    default => optional($perkara->hakim->first())->hakim_nama ?? 'Hakim Tidak Ditemukan',
+                };
+            }
             $hakimKeys->push($key);
         }
 
@@ -54,6 +78,10 @@ class ListAntrianSidangs extends ListRecords
                 $tab = Tab::make('permohonan', 'Permohonan');
             } elseif ($hakim === 'gugatan_sederhana') {
                 $tab = Tab::make('gugatan_sederhana', 'GS');
+            } elseif ($hakim === 'mediasi') {
+                $tab = Tab::make('mediasi', 'Mediasi');
+            } elseif ($hakim === 'pk') {
+                $tab = Tab::make('pk', 'PK');
             } else {
                 $tab = Tab::make($hakim, $hakim);
             }
@@ -77,7 +105,19 @@ class ListAntrianSidangs extends ListRecords
         // Ambil dan gabungkan data...
         $perkaraHariIni = static::getResource()::getEloquentQuery()
             ->whereHas('jadwal', fn($q) => $q->whereDate('tanggal_sidang', $now))
-            ->with(['hakim' => fn($q) => $q->where('jabatan_hakim_id', 1)])
+            ->orWherehas('jadwalMediasi', function ($q) use ($now) {
+                $q->whereDate('tanggal_mediasi', $now);
+            })
+            ->orWherehas('jadwalPk', function ($q) use ($now) {
+                $q->whereDate('tanggal_pemeriksaan', $now);
+            })
+            ->with(['hakim' => fn($q) => $q->where('jabatan_hakim_id', 1), 'mediasi', 'jadwalMediasi' => function ($q) use ($now) {
+                $q->whereDate('tanggal_mediasi', $now);
+            }, 'jadwalPk' => function ($q) use ($now) {
+                $q->whereDate('tanggal_pemeriksaan', $now);
+            }, 'jadwal' => function ($q) use ($now) {
+                $q->whereDate('tanggal_sidang', $now);
+            }])
             ->get();
 
         $perkaraIds = $perkaraHariIni->pluck('perkara_id');
@@ -94,15 +134,20 @@ class ListAntrianSidangs extends ListRecords
             // Logika filter tab Anda...
             if ($selectedTab === null || $selectedTab === 'semua' || $selectedTab === '') {
                 return true;
+            } elseif ($selectedTab === 'mediasi') {
+                return (int) $perkara->checkins->contains('jenis_sidang', 'mediasi');
+            } elseif ($selectedTab === 'mediasi') {
+                return (int) $perkara->checkins->contains('jenis_sidang', 'pk');
             } elseif ($selectedTab === 'permohonan') {
                 return (int) $perkara->alur_perkara_id === 2;
-            } elseif ($selectedTab === 'GS') {
+            } elseif ($selectedTab === 'gugatan_sederhana') {
                 return (int) $perkara->alur_perkara_id === 8;
             } else { // Tab Hakim
                 $hakim = optional($perkara->hakim->first());
                 return $hakim && $hakim->hakim_nama === $selectedTab;
             }
         });
+        // dd($filteredPerkara->pluck('jadwalMediasi', 'nomor_perkara'));
 
         // --- DI SINI ANDA MENAMBAHKAN FILTER TAMBAHAN ---
         // Filter untuk hanya menampilkan perkara yang memiliki check-in
@@ -145,11 +190,40 @@ class ListAntrianSidangs extends ListRecords
                     ->label('Jenis'),
 
                 TextColumn::make('hakim_ketua')
+                    ->formatStateUsing(function ($record) {
+
+                        $mediatorText = $record->mediasi?->mediator_text;
+
+                        if ($mediatorText) {
+                            return $record->hakim_ketua . "-mediator(" . $mediatorText . ")";
+                        }
+                        return $record->hakim_ketua;
+                    })
                     ->searchable()
                     ->label('Hakim'),
                 TextColumn::make('panitera_active')
                     ->searchable()
                     ->label('PP'),
+                TextColumn::make('agenda')
+                    ->getStateUsing(function ($record) {
+                        if ($record->jadwalMediasi->isNotEmpty()) {
+                            return "Mediasi";
+
+                            // 2. Cek Relasi hasOne: PK
+                        } elseif ($record->jadwalPk->isNotEmpty()) {
+                            return "PK";
+
+                            // 3. Akses Agenda dari Jadwal (Relasi HasMany)
+                        }
+                        // Gunakan Nullsafe (?->) setelah first()
+                        // Jika jadwal kosong, $agenda akan bernilai null secara aman.
+                        $agenda = $record->jadwal->first()?->agenda;
+
+                        // Berikan nilai default jika $agenda masih null
+                        return $agenda ?? 'Sidang Lanjutan (Jadwal Belum Ditetapkan)';
+                    })
+                    ->searchable()
+                    ->label('Agenda'),
                 TextColumn::make('status_sidang')
                     ->badge()
                     ->color(function (Perkara $record) {
@@ -180,6 +254,13 @@ class ListAntrianSidangs extends ListRecords
                     ->badge()
                     ->color(fn($state) => str_contains($state, '/') && explode('/', $state)[0] == explode('/', $state)[1] ? 'success' : 'warning')
                     ->label('Kehadiran'),
+                TextColumn::make('nomor_perkara_end')
+                    ->getStateUsing(function ($record) {
+                        return $record->nomor_perkara;
+                    })
+                    ->searchable()
+                    ->sortable()
+                    ->label('Nomor Perkara'),
             ])
             ->filters([])
             ->recordActions([
@@ -331,6 +412,7 @@ class ListAntrianSidangs extends ListRecords
             'cakra' => 'ruang sidang cakra',
             'tirta' => 'ruang sidang tirta',
             'anak' => 'ruang sidang anak',
+            'mediasi' => 'ruang mediasi',
             default => 'ruang sidang',
         };
 

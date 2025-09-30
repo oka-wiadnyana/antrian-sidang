@@ -21,6 +21,8 @@ class HearingTimeForm
                         'gugatan_cerai' => 'gugatan_cerai',
                         'gugatan_non_cerai' => 'gugatan_non_cerai',
                         'pidana' => 'pidana',
+                        'mediasi' => 'mediasi',
+                        'pk' => 'pk',
                     ])
                     ->required(),
                 TimePicker::make('time')

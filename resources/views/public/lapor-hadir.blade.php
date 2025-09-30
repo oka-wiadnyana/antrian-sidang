@@ -199,8 +199,20 @@
                                 <div class="btn btn-circle btn-success mb-3">
                                     <i class="bi bi-2-circle"></i>
                                 </div>
-                                <h5>Pilih Nomor Perkara</h5>
+                                <h5>Pilih jenis sidang dan nomor perkara</h5>
                             </div>
+                            <div class="mb-3">
+                                <label class="form-label">Pilih Jenis Sidang</label>
+                                <select id="select-jenis-sidang" class="form-control" placeholder="pilih .."
+                                    name='jenis_sidang'>
+                                    <option value="" selected disabled>pilih...</option>
+                                    <option value="sidang">Sidang</option>
+                                    <option value="mediasi">Mediasi</option>
+                                    <option value="pk">Sidang PK</option>
+                                </select>
+                                <input type="hidden" id="perkara_id" name="perkara_id">
+                            </div>
+
                             <div class="mb-3">
                                 <label class="form-label">Cari Nomor Perkara</label>
                                 <select id="select-perkara" class="form-control"
@@ -231,7 +243,8 @@
                                 <!-- Pihak3: Intervensi (hanya gugatan) -->
                                 <div class="col-md-6 mt-3" style="display: none;">
                                     <div class="border rounded p-2 bg-info">
-                                        <h6 class="text-white" id="label-pihak3"><i class="bi bi-person-plus"></i> Pihak
+                                        <h6 class="text-white" id="label-pihak3"><i class="bi bi-person-plus"></i>
+                                            Pihak
                                             Intervensi</h6>
                                         <div class="pihak-list" id="list-pihak3"></div>
                                     </div>
@@ -723,6 +736,10 @@
                     alert('Silakan pilih salah satu pihak terlebih dahulu.');
                     return;
                 }
+                if (!$('[name="jenis_sidang"]').val()) {
+                    alert('Silakan pilih jenis sidang terlebih dahulu.');
+                    return;
+                }
                 $('#step2').removeClass('active');
                 $('#form-lapor').addClass('active');
                 $('html, body').animate({
@@ -784,6 +801,7 @@
                 console.log('tipe_pihak:', $('#form-tipe-pihak').val());
                 console.log('nama_yang_hadir:', $('#form-nama-yang-hadir').val());
                 console.log('status_kehadiran:', $('input[name="status_kehadiran"]:checked').val());
+                console.log('jenis_sidang:', $('[name="jenis_sidang"]').val());
                 console.log('latitude:', $('#latitude').val());
                 console.log('longitude:', $('#longitude').val());
                 console.log('jarak_meter:', $('#jarak_meter').val());
@@ -803,12 +821,17 @@
                     tipe_pihak: $('#form-tipe-pihak').val(),
                     nama_yang_hadir: $('#form-nama-yang-hadir').val(),
                     status_kehadiran: $('input[name="status_kehadiran"]:checked').val(),
+                    jenis_sidang: $('[name="jenis_sidang"]').val(),
                     latitude: $('#latitude').val(),
                     longitude: $('#longitude').val(),
                     jarak_meter: $('#jarak_meter').val()
                 };
 
                 // Validasi
+                if (!formData.jenis_sidang) {
+                    alert('Silakan pilih jenis sidang.');
+                    return;
+                }
                 if (!formData.tipe_pihak) {
                     alert('Silakan pilih pihak.');
                     return;

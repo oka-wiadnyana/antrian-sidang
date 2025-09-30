@@ -25,11 +25,31 @@ class Perkara extends Model
         return $this->hasMany(PerkaraPaniteraPn::class, 'perkara_id', 'perkara_id');
     }
 
+    public function mediasi()
+    {
+        return $this->hasOne(PerkaraMediasi::class, 'perkara_id', 'perkara_id');
+    }
+
     public function jadwal()
     {
         return $this->hasMany(PerkaraJadwalSidang::class, 'perkara_id', 'perkara_id');
     }
+    public function jadwalMediasi()
+    {
+        return $this->hasManyThrough(
+            PerkaraJadwalMediasi::class, // Final model
+            PerkaraMediasi::class,       // Intermediate model
+            'perkara_id',                // Foreign key di PerkaraMediasi → mengacu ke Perkara
+            'mediasi_id',                // Foreign key di PerkaraJadwalMediasi → mengacu ke PerkaraMediasi
+            'perkara_id',                // Local key di Perkara (primary key)
+            'mediasi_id'                 // Local key di PerkaraMediasi (primary key)
+        );
+    }
 
+    public function jadwalPk()
+    {
+        return $this->hasMany(PerkaraJadwalPemeriksaanPk::class, 'perkara_id', 'perkara_id');
+    }
 
     // Relasi ke checkin_pihak (db_antrian) — tetap jalan!
     public function checkins()
@@ -116,10 +136,31 @@ class Perkara extends Model
 
     public function getJenisPerkaraAttribute()
     {
+
         $alur = $this->alur_perkara_id;
         $jenis = $this->jenis_perkara_id;
+        $jenis_sidang = $this->checkins;
+        // dd($jenis_sidang);
+        $perkara_id = $this->perkara_id;
+        // dd($perkara_id);
+        // $jenis_sidang = $this->jenis_sidang;
+        // dd($jenis_sidang);
+
 
         // Permohonan: alur_perkara_id = 2
+
+        $hasMediasi = $jenis_sidang->contains('jenis_sidang', 'mediasi');
+        // dd($hasMediasi);
+
+        $hasPk = $jenis_sidang->contains('jenis_sidang', 'pk');
+
+        if ($hasMediasi) {
+            return 'mediasi';
+        }
+        if ($hasPk) {
+            return 'pk';
+        }
+
         if ($alur == 8) {
             return 'gugatan_sederhana';
         }
@@ -141,6 +182,11 @@ class Perkara extends Model
             return 'pidana';
         }
 
+
+        // if ($jenis_sidang == 'pk') {
+        //     return 'pk';
+        // }
+
         // Fallback: jika tidak match, anggap gugatan non-cerai
         return 'gugatan_non_cerai';
     }
@@ -148,7 +194,7 @@ class Perkara extends Model
     // ✅ LOGIKA BISNIS: Waktu Mulai Sesi
     public function getWaktuMulaiSesiAttribute()
     {
-        $hearing_time = HearingTime::where('jenis_perkara', $this->jenis_perkara)->first()->toArray();
+        // $hearing_time = HearingTime::where('jenis_perkara', $this->jenis_perkara)->first()->toArray();
 
         return match ($this->jenis_perkara) {
             'permohonan' => $hearing_time['time'] ?? '09:00:00',
@@ -156,6 +202,8 @@ class Perkara extends Model
             'gugatan_cerai' => $hearing_time['time'] ??  '11:00:00',
             'gugatan_non_cerai' => $hearing_time['time'] ?? '14:00:00',
             'pidana' => $hearing_time['time'] ?? '14:00:00',
+            'mediasi' => $hearing_time['time'] ?? '09:00:00',
+            'pk' => $hearing_time['time'] ?? '11:00:00',
             default => '09:00:00'
         };
     }

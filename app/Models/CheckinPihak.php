@@ -15,6 +15,7 @@ class CheckinPihak extends Model
         'tipe_pihak',
         'nama_yang_hadir',
         'status_kehadiran',
+        'jenis_sidang',
         'latitude',
         'longitude',
         'jarak_meter',

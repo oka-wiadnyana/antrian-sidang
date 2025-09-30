@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Events\RefreshQueuePage;
 use App\Models\Perkara;
 use App\Models\CheckinPihak;
+use App\Models\PerkaraJadwalMediasi;
+use App\Models\PerkaraJadwalPemeriksaanPk;
 use App\Models\PerkaraJadwalSidang;
 use App\Models\PerkaraPihak1;
 use App\Models\PerkaraPihak2;
@@ -26,6 +28,7 @@ class CheckinPublicController extends Controller
             'tipe_pihak' => 'required|in:pihak1,pihak2,pihak3,pihak4',
             'nama_yang_hadir' => 'required|string',
             'status_kehadiran' => 'required|in:pihak_langsung,kuasa',
+            'jenis_sidang' => 'required|string',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'jarak_meter' => 'required|numeric',
@@ -50,6 +53,7 @@ class CheckinPublicController extends Controller
             'tipe_pihak' => $request->tipe_pihak,
             'nama_yang_hadir' => $request->nama_yang_hadir,
             'status_kehadiran' => $request->status_kehadiran,
+            'jenis_sidang' => $request->jenis_sidang,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
             'jarak_meter' => $request->jarak_meter,
@@ -67,9 +71,21 @@ class CheckinPublicController extends Controller
         $today = now()->format('Y-m-d');
 
         // Ambil jadwal sidang hari ini — TANPA eager load perkara dulu
-        $jadwalHariIni = PerkaraJadwalSidang::whereDate('tanggal_sidang', $today)
+        $jadwalSidangHariIni = PerkaraJadwalSidang::whereDate('tanggal_sidang', $today)
             ->with('perkara') // tetap load untuk nama & jenis
             ->get();
+        $jadwalMediasiHariIni = PerkaraJadwalMediasi::whereDate('tanggal_mediasi', $today)
+            ->with('perkara') // tetap load untuk nama & jenis
+            ->get();
+
+        // return response()->json($jadwalSidangHariIni);
+
+        $jadwalPkHariIni = PerkaraJadwalPemeriksaanPk::whereDate('tanggal_pemeriksaan', $today)
+            ->with('perkara') // tetap load untuk nama & jenis
+            ->get();
+        $jadwalHariIni = $jadwalSidangHariIni->merge($jadwalMediasiHariIni)->merge($jadwalPkHariIni);
+
+        // return response()->json($jadwalHariIni);
 
         // Filter berdasarkan query
         $filtered = $jadwalHariIni->filter(function ($jadwal) use ($q) {
@@ -79,13 +95,14 @@ class CheckinPublicController extends Controller
             return stripos($p->nomor_perkara, $q) !== false ||
                 stripos($p->jenis_perkara, $q) !== false;
         })->take(10);
+        // return response()->json($filtered);
 
         // ✅ INI KUNCINYA: Kirim perkara_id sebagai "id"
         $result = $filtered->map(function ($jadwal) {
             $p = $jadwal->perkara;
 
             return [
-                'id' => $jadwal->perkara_id, // ✅ INI YANG PENTING! — bukan $p->id, tapi $jadwal->perkara_id
+                'id' => $p->perkara_id, // ✅ INI YANG PENTING! — bukan $p->id, tapi $jadwal->perkara_id
                 'nomor_perkara' => $p->nomor_perkara,
                 'jenis' => $p->jenis_perkara ?? 'Tidak ada jenis',
                 'jam_sidang' => $jadwal->jam_sidang ?? 'Belum ditentukan',

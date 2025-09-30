@@ -349,6 +349,11 @@
                                 {{-- @php
                                     $no = $no;
                                 @endphp --}}
+                            @elseif($kelompok === 'MEDIASI')
+                                <i class="fas fa-balance-scale"></i> MEDIASI
+                                {{-- @php
+                                    $no = $no;
+                                @endphp --}}
                             @else
                                 <i class="fas fa-user-tie"></i> Majelis Hakim {{ $majelisNo++ }}
                             @endif
@@ -423,6 +428,8 @@ $sidangStatus = \App\Models\CheckinPihak::where('perkara_id', $p->perkara_id)
                                 <i class="fas fa-file-alt"></i> PERMOHONAN
                             @elseif($kelompok === 'GUGATAN SEDERHANA')
                                 <i class="fas fa-balance-scale"></i> GUGATAN SEDERHANA
+                            @elseif($kelompok === 'MEDIASI')
+                                <i class="fas fa-balance-scale"></i> MEDIASI
                             @else
                                 <i class="fas fa-user-tie"></i> Majelis Hakim {{ $majelisNo++ }}
                             @endif
