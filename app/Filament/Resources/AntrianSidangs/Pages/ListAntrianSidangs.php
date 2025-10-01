@@ -344,6 +344,7 @@ class ListAntrianSidangs extends ListRecords
                                 'cakra' => 'Ruang Sidang Cakra',
                                 'tirta' => 'Ruang Sidang Tirta',
                                 'anak' => 'Ruang Sidang Anak',
+                                'mediasi' => 'Ruang Mediasi',
                             ])
                             ->required(),
                     ])
