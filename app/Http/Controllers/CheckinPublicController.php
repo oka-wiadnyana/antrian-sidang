@@ -84,16 +84,20 @@ class CheckinPublicController extends Controller
             ->with('perkara') // tetap load untuk nama & jenis
             ->get();
         $jadwalHariIni = $jadwalSidangHariIni->merge($jadwalMediasiHariIni)->merge($jadwalPkHariIni);
-
         // return response()->json($jadwalHariIni);
+        $perkaraIds = $jadwalHariIni->pluck('perkara_id');
+        $allCheckins = CheckinPihak::whereIn('perkara_id', $perkaraIds)
+            ->get();
 
         // Filter berdasarkan query
-        $filtered = $jadwalHariIni->filter(function ($jadwal) use ($q) {
+        $filtered = $jadwalHariIni->filter(function ($jadwal) use ($q, $allCheckins) {
             if (!$jadwal->perkara) return false;
-
             $p = $jadwal->perkara;
+            $p->setRelation('checkins', $allCheckins->get($p->perkara_id, collect()));
+            // dd($p->jenis_perkara);
             return stripos($p->nomor_perkara, $q) !== false ||
                 stripos($p->jenis_perkara, $q) !== false;
+            // return stripos($p->nomor_perkara, $q) !== false;
         })->take(10);
         // return response()->json($filtered);
 
