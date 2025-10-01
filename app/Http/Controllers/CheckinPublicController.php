@@ -120,6 +120,8 @@ class CheckinPublicController extends Controller
     public function getPihak($perkara_id)
     {
         $perkara = Perkara::findOrFail($perkara_id);
+        $checkin = CheckinPihak::where('perkara_id', $perkara_id)->first();
+        $perkara->setRelation('checkins', ($checkin) ? collect([$checkin]) : collect());
 
         $pihak1 = PerkaraPihak1::where('perkara_id', $perkara_id)->get()->pluck('nama')->toArray();
         $pihak2 = PerkaraPihak2::where('perkara_id', $perkara_id)->get()->pluck('nama')->toArray();
