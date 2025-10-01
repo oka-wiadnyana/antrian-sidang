@@ -565,6 +565,17 @@
         function loadPihak(perkaraId) {
             $.get(`/api/perkara/${perkaraId}/pihak?t=${Date.now()}`, function(data) {
                 console.log('=== DATA PIHAK ===', data);
+                if (data.fail) {
+                    $msg = "";
+                    if (data.fail == 'selesai') {
+                        $msg =
+                            "Perkara ini telah selesai disidangkan, anda tidak dapat melakukan pelaporan kehadiran";
+                    } else if (data.fail == 'sedang_berlangsung') {
+                        $msg = "Perkara ini sedang berlangsung, anda tidak dapat melakukan pelaporan kehadiran";
+                    }
+                    alert($msg);
+                    return;
+                }
 
                 let html1 = '',
                     html2 = '',

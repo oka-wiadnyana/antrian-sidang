@@ -70,6 +70,7 @@ class CheckinPublicController extends Controller
         $q = $request->get('q');
         $today = now()->format('Y-m-d');
 
+
         // Ambil jadwal sidang hari ini — TANPA eager load perkara dulu
         $jadwalSidangHariIni = PerkaraJadwalSidang::whereDate('tanggal_sidang', $today)
             ->with('perkara') // tetap load untuk nama & jenis
@@ -121,6 +122,10 @@ class CheckinPublicController extends Controller
     {
         $perkara = Perkara::findOrFail($perkara_id);
         $checkin = CheckinPihak::where('perkara_id', $perkara_id)->first();
+        if ($checkin?->status_sidang == 'sedang_berlangsung' || $checkin?->status_sidang == 'selesai') {
+            return response()->json(['fail' => $checkin->status_sidang]);
+        }
+
         $perkara->setRelation('checkins', ($checkin) ? collect([$checkin]) : collect());
 
         $pihak1 = PerkaraPihak1::where('perkara_id', $perkara_id)->get()->pluck('nama')->toArray();
