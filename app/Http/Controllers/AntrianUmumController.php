@@ -25,7 +25,9 @@ class AntrianUmumController extends Controller
 
         $perkaraIds = $perkaraHariIni->pluck('perkara_id');
         $allCheckins = CheckinPihak::whereIn('perkara_id', $perkaraIds)
+            ->whereDate('waktu_checkin', $today)
             ->get()
+
             ->groupBy('perkara_id');
         // dd($allCheckins, $perkaraHariIni->pluck('perkara_id'));
 
