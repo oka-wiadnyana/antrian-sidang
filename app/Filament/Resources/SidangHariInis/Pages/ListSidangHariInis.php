@@ -154,6 +154,7 @@ class ListSidangHariInis extends ListRecords
     {
         return $table
             // ->query(static::getResource()::getEloquentQuery())
+            ->toolbarActions([])
             ->columns([
                 TextColumn::make('nomor_perkara')
                     ->searchable()
