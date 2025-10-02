@@ -126,8 +126,11 @@ class ListAntrianSidangs extends ListRecords
             ->orderBy('waktu_checkin', 'asc')
             ->get()
             ->groupBy('perkara_id');
+        // dd($allCheckins);
 
         $perkaraHariIni->each(fn($perkara) => $perkara->setRelation('checkins', $allCheckins->get($perkara->perkara_id, collect())));
+
+        // dd($perkaraHariIni->pluck('checkins', 'nomor_perkara'));
 
         // Langkah 4: Terapkan filter berdasarkan tab yang aktif
         $filteredPerkara = $perkaraHariIni->filter(function ($perkara) use ($selectedTab) {
@@ -152,7 +155,7 @@ class ListAntrianSidangs extends ListRecords
         // --- DI SINI ANDA MENAMBAHKAN FILTER TAMBAHAN ---
         // Filter untuk hanya menampilkan perkara yang memiliki check-in
         $filteredPerkara = $filteredPerkara->filter(fn($perkara) => $perkara->checkins->isNotEmpty());
-        // dd($filteredPerkara);
+        // dd($filteredPerkara->pluck('checkins', 'nomor_perkara'));
 
         // Langkah 5: Urutkan data berdasarkan waktu check-in
         return $filteredPerkara->sortBy(function ($perkara) {
@@ -163,7 +166,7 @@ class ListAntrianSidangs extends ListRecords
             // Pastikan ada data checkin sebelum mencoba mengakses propertinya
             return $checkin ? $checkin->waktu_checkin : null;
         })->sortBy('hakim_ketua');
-        // dd($filteredPerkara);
+
         // Langkah 5: Urutkan data yang sudah difilter
         // return $filteredPerkara;
     }
@@ -229,6 +232,7 @@ class ListAntrianSidangs extends ListRecords
                     ->badge()
                     ->color(function (Perkara $record) {
                         $checkin = \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
+                            ->whereDate('waktu_checkin', now()->format('Y-m-d'))
                             ->first();
                         return match ($checkin->status_sidang) {
                             'selesai' => 'info',
@@ -240,6 +244,7 @@ class ListAntrianSidangs extends ListRecords
                     })
                     ->getStateUsing(function (Perkara $record) {
                         $checkin = \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
+                            ->whereDate('waktu_checkin', now()->format('Y-m-d'))
                             ->first();
 
                         return $checkin->status_sidang == 'sedang_berlangsung' ? 'Sedang Berlangsung' : ($checkin->status_sidang == 'selesai' ? 'Selesai' : 'Belum Mulai');
@@ -271,6 +276,7 @@ class ListAntrianSidangs extends ListRecords
                     ->color('success')
                     ->visible(function (Perkara $record) {
                         $checkin = \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
+                            ->whereDate('waktu_checkin', now()->format('Y-m-d'))
                             ->first();
                         $status = optional($checkin)->status_sidang;
 
@@ -302,6 +308,7 @@ class ListAntrianSidangs extends ListRecords
                     ->color('info')
                     ->visible(function (Perkara $record) {
                         $checkin = \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
+                            ->whereDate('waktu_checkin', now()->format('Y-m-d'))
                             ->first();
                         $status = optional($checkin)->status_sidang;
 
@@ -311,6 +318,7 @@ class ListAntrianSidangs extends ListRecords
                     ->action(function (Perkara $record) {
                         // Update semua checkin pihak untuk perkara ini
                         \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
+                            ->whereDate('waktu_checkin', now()->format('Y-m-d'))
                             ->update(['status_sidang' => 'selesai']);
                         event(new RefreshQueuePage());
                         Notification::make()
