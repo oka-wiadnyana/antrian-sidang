@@ -121,7 +121,7 @@ class CheckinPublicController extends Controller
     public function getPihak($perkara_id)
     {
         $perkara = Perkara::findOrFail($perkara_id);
-        $checkin = CheckinPihak::where('perkara_id', $perkara_id)->first();
+        $checkin = CheckinPihak::where('perkara_id', $perkara_id)->whereDate('waktu_checkin', now()->format('Y-m-d'))->first();
         if ($checkin?->status_sidang == 'sedang_berlangsung' || $checkin?->status_sidang == 'selesai') {
             return response()->json(['fail' => $checkin->status_sidang]);
         }

@@ -19,38 +19,36 @@ class ListSidangHariInis extends ListRecords
     public function getTabs(): array
     {
         $now = now()->format('Y-m-d');
+
+        // **OPTIMASI UTAMA:** Hanya ambil kolom yang dibutuhkan: perkara_id, alur_perkara_id.
+        // Relasi 'hakim' (dengan kolom minimal) tetap dibutuhkan untuk mendapatkan nama hakim.
+        // Relasi 'jadwalMediasi' dan 'jadwalPk' tetap diperlukan untuk isNotEmpty().
         $perkaraHariIni = static::getResource()::getEloquentQuery()
-            ->whereHas('jadwal', function ($q) use ($now) {
-                $q->whereDate('tanggal_sidang', $now);
-            })
-            ->orWherehas('jadwalMediasi', function ($q) use ($now) {
-                $q->whereDate('tanggal_mediasi', $now);
-            })
-            ->orWherehas('jadwalPk', function ($q) use ($now) {
-                $q->whereDate('tanggal_pemeriksaan', $now);
-            })
-            ->with(['hakim' => fn($q) => $q->where('jabatan_hakim_id', 1)])
+            ->whereHas('jadwal', fn($q) => $q->whereDate('tanggal_sidang', $now))
+            ->orWherehas('jadwalMediasi', fn($q) => $q->whereDate('tanggal_mediasi', $now))
+            ->orWherehas('jadwalPk', fn($q) => $q->whereDate('tanggal_pemeriksaan', $now))
+
+            // Memilih kolom minimal dari tabel Perkara
+            ->select(['perkara_id', 'alur_perkara_id'])
+
+            // Eager load dengan kolom minimal untuk menentukan kunci tab
+            ->with([
+                'hakim' => fn($q) => $q->select(['perkara_id', 'hakim_nama'])->where('jabatan_hakim_id', 1),
+                'jadwalMediasi' => fn($q) => $q->select(['perkara_id', 'tanggal_mediasi'])->whereDate('tanggal_mediasi', $now),
+                'jadwalPk' => fn($q) => $q->select(['perkara_id', 'tanggal_pemeriksaan'])->whereDate('tanggal_pemeriksaan', $now)
+            ])
             ->get();
 
-        $perkaraIds = $perkaraHariIni->pluck('perkara_id');
-        $allCheckins = CheckinPihak::whereIn('perkara_id', $perkaraIds)
-            ->get()
-            ->groupBy('perkara_id');
-
-
-
+        // Logika penentuan kunci tab tetap sama
         $hakimKeys = collect();
         foreach ($perkaraHariIni as $perkara) {
-            $perkara->setRelation(
-                'checkins',
-                $allCheckins->get($perkara->perkara_id, collect())
-            );
-            if ($perkara->checkins->contains('jenis_sidang', 'mediasi')) {
+            // Logika check-in dihilangkan di sini karena tidak dibutuhkan untuk membuat tab
+
+            if ($perkara->jadwalMediasi->isNotEmpty()) {
                 $key = 'mediasi';
-            } elseif ($perkara->checkins->contains('jenis_sidang', 'pk')) {
+            } elseif ($perkara->jadwalPk->isNotEmpty()) {
                 $key = 'pk';
             } else {
-
                 $key = match ($perkara->alur_perkara_id) {
                     2 => 'permohonan',
                     8 => 'gugatan_sederhana',
@@ -60,6 +58,7 @@ class ListSidangHariInis extends ListRecords
             $hakimKeys->push($key);
         }
 
+        // ... (Sisa logika pembentukan tab tetap sama) ...
         $uniqueKeys = $hakimKeys->unique()->values();
         $tabs = collect();
 
@@ -79,7 +78,6 @@ class ListSidangHariInis extends ListRecords
             $tabs->put($hakim, $tab);
         }
 
-        // Gunakan prepend untuk menambahkan tab 'semua' di awal dengan kunci 'semua'
         $tabs->prepend(Tab::make('semua', 'Semua'), 'semua');
 
         return $tabs->toArray();
@@ -87,67 +85,61 @@ class ListSidangHariInis extends ListRecords
 
     public function getTableRecords(): Collection
     {
-        // ... (Langkah 1 - 4: Logika yang sudah kita perbaiki)
-
         $selectedTab = $this->activeTab;
         $now = now()->format('Y-m-d');
 
-        // Ambil dan gabungkan data...
-        $perkaraHariIni = static::getResource()::getEloquentQuery()
-            ->whereHas('jadwal', fn($q) => $q->whereDate('tanggal_sidang', $now))
-            ->orWherehas('jadwalMediasi', function ($q) use ($now) {
-                $q->whereDate('tanggal_mediasi', $now);
-            })
-            ->orWherehas('jadwalPk', function ($q) use ($now) {
-                $q->whereDate('tanggal_pemeriksaan', $now);
+        // 1. Definisikan Kueri Dasar
+        $query = static::getResource()::getEloquentQuery()
+            // Gunakan where() untuk mengelompokkan kondisi OR scheduling agar lebih aman dan jelas
+            ->where(function ($q) use ($now) {
+                $q->whereHas('jadwal', fn($qq) => $qq->whereDate('tanggal_sidang', $now))
+                    ->orWherehas('jadwalMediasi', fn($qq) => $qq->whereDate('tanggal_mediasi', $now))
+                    ->orWherehas('jadwalPk', fn($qq) => $qq->whereDate('tanggal_pemeriksaan', $now));
             })
             ->with([
+                // Eager loading tetap diperlukan
                 'hakim' => fn($q) => $q->where('jabatan_hakim_id', 1),
                 'mediasi',
-                'jadwalMediasi' => function ($q) use ($now) {
-                    $q->whereDate('tanggal_mediasi', $now);
-                },
-                'jadwalPk' => function ($q) use ($now) {
-                    $q->whereDate('tanggal_pemeriksaan', $now);
-                },
-                'jadwal' => function ($q) use ($now) {
-                    $q->whereDate('tanggal_sidang', $now);
-                },
+                'jadwalMediasi' => fn($q) => $q->whereDate('tanggal_mediasi', $now),
+                'jadwalPk' => fn($q) => $q->whereDate('tanggal_pemeriksaan', $now),
+                'jadwal' => fn($q) => $q->whereDate('tanggal_sidang', $now),
                 'pihak1',
                 'pihak2',
                 'pihak_pengacara'
-            ])
-            ->get();
-        // dd($perkaraHariIni->pluck('pihak1')->first()->pihak()->telepon);
-        $perkaraIds = $perkaraHariIni->pluck('perkara_id');
+            ]);
+
+        // 2. Terapkan FILTER TAB ke Kueri (Peningkatan Kinerja Paling Besar)
+        if ($selectedTab !== null && $selectedTab !== 'semua' && $selectedTab !== '') {
+            if ($selectedTab === 'mediasi') {
+                // Gunakan whereHas untuk filter mediasi/pk
+                $query->whereHas('jadwalMediasi', fn($q) => $q->whereDate('tanggal_mediasi', $now));
+            } elseif ($selectedTab === 'pk') {
+                $query->whereHas('jadwalPk', fn($q) => $q->whereDate('tanggal_pemeriksaan', $now));
+            } elseif ($selectedTab === 'permohonan') {
+                // Gunakan where langsung pada kolom di tabel perkara
+                $query->where('alur_perkara_id', 2);
+            } elseif ($selectedTab === 'gugatan_sederhana') {
+                $query->where('alur_perkara_id', 8);
+            } else { // Filter Tab Hakim
+                // Filter berdasarkan nama hakim di relasi 'hakim'
+                $query->whereHas('hakim', fn($q) => $q->where('jabatan_hakim_id', 1)->where('hakim_nama', $selectedTab));
+            }
+        }
+
+        // 3. Ambil data yang sudah terfilter (Hasil set data JAUH LEBIH KECIL)
+        $filteredPerkara = $query->get();
+
+        // 4. Lanjutkan dengan Logika Check-in (Ini sudah efisien)
+        $perkaraIds = $filteredPerkara->pluck('perkara_id');
         $allCheckins = CheckinPihak::whereIn('perkara_id', $perkaraIds)
             ->whereDate('waktu_checkin', $now)
             ->orderBy('waktu_checkin', 'asc')
             ->get()
             ->groupBy('perkara_id');
 
-        $perkaraHariIni->each(fn($perkara) => $perkara->setRelation('checkins', $allCheckins->get($perkara->perkara_id, collect())));
+        $filteredPerkara->each(fn($perkara) => $perkara->setRelation('checkins', $allCheckins->get($perkara->perkara_id, collect())));
 
-        // Langkah 4: Terapkan filter berdasarkan tab yang aktif
-        $filteredPerkara = $perkaraHariIni->filter(function ($perkara) use ($selectedTab) {
-            // Logika filter tab Anda...
-            if ($selectedTab === null || $selectedTab === 'semua' || $selectedTab === '') {
-                return true;
-            } elseif ($selectedTab === 'mediasi') {
-                return (int) $perkara->checkins->contains('jenis_sidang', 'mediasi');
-            } elseif ($selectedTab === 'mediasi') {
-                return (int) $perkara->checkins->contains('jenis_sidang', 'pk');
-            } elseif ($selectedTab === 'permohonan') {
-                return (int) $perkara->alur_perkara_id === 2;
-            } elseif ($selectedTab === 'gugatan_sederhana') {
-                return (int) $perkara->alur_perkara_id === 8;
-            } else { // Tab Hakim
-                $hakim = optional($perkara->hakim->first());
-                return $hakim && $hakim->hakim_nama === $selectedTab;
-            }
-        });
-        // dd($filteredPerkara);
-        // Langkah 5: Urutkan data berdasarkan waktu check-in
+        // 5. Urutkan dan Kembalikan
         return $filteredPerkara->sortBy('hakim_ketua');
     }
     public  function table(Table $table): Table
@@ -286,6 +278,7 @@ class ListSidangHariInis extends ListRecords
             ])
             ->filters([])
             ->recordActions([])
+            ->recordUrl(null)
             ->paginated(false);
     }
     // protected function getHeaderActions(): array
