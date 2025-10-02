@@ -42,6 +42,8 @@ class CheckinPublicController extends Controller
         // Cek duplikat
         if (CheckinPihak::where('perkara_id', $request->perkara_id)
             ->where('tipe_pihak', $request->tipe_pihak)
+            ->where('nama_yang_hadir', $request->nama_yang_hadir)
+            ->whereDate('waktu_checkin', now()->format('Y-m-d'))
             ->exists()
         ) {
             return response()->json(['error' => 'Pihak ini sudah check-in.'], 400);
