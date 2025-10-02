@@ -6,6 +6,11 @@ use App\Events\RefreshQueuePage;
 use App\Filament\Resources\AntrianSidangs\AntrianSidangResource;
 use App\Models\CheckinPihak;
 use App\Models\Perkara;
+use App\Models\PerkaraPihak1;
+use App\Models\PerkaraPihak2;
+use App\Models\PerkaraPihak3;
+use App\Models\PerkaraPihak4;
+use Dom\Text;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -111,13 +116,24 @@ class ListAntrianSidangs extends ListRecords
             ->orWherehas('jadwalPk', function ($q) use ($now) {
                 $q->whereDate('tanggal_pemeriksaan', $now);
             })
-            ->with(['hakim' => fn($q) => $q->where('jabatan_hakim_id', 1), 'mediasi', 'jadwalMediasi' => function ($q) use ($now) {
-                $q->whereDate('tanggal_mediasi', $now);
-            }, 'jadwalPk' => function ($q) use ($now) {
-                $q->whereDate('tanggal_pemeriksaan', $now);
-            }, 'jadwal' => function ($q) use ($now) {
-                $q->whereDate('tanggal_sidang', $now);
-            }])
+            ->with([
+                'hakim' => fn($q) => $q->where('jabatan_hakim_id', 1),
+                'mediasi',
+                'jadwalMediasi' => function ($q) use ($now) {
+                    $q->whereDate('tanggal_mediasi', $now);
+                },
+                'jadwalPk' => function ($q) use ($now) {
+                    $q->whereDate('tanggal_pemeriksaan', $now);
+                },
+                'jadwal' => function ($q) use ($now) {
+                    $q->whereDate('tanggal_sidang', $now);
+                },
+                'pihak1',
+                'pihak2',
+
+                'pihak3',
+                'pihak4',
+            ])
             ->get();
 
         $perkaraIds = $perkaraHariIni->pluck('perkara_id');
@@ -155,7 +171,7 @@ class ListAntrianSidangs extends ListRecords
         // --- DI SINI ANDA MENAMBAHKAN FILTER TAMBAHAN ---
         // Filter untuk hanya menampilkan perkara yang memiliki check-in
         $filteredPerkara = $filteredPerkara->filter(fn($perkara) => $perkara->checkins->isNotEmpty());
-        // dd($filteredPerkara->pluck('checkins', 'nomor_perkara'));
+
 
         // Langkah 5: Urutkan data berdasarkan waktu check-in
         return $filteredPerkara->sortBy(function ($perkara) {
@@ -192,6 +208,74 @@ class ListAntrianSidangs extends ListRecords
                         default => 'secondary',
                     })
                     ->label('Jenis'),
+                TextColumn::make('kehadiran_pihak_custom')
+                    ->label('Kehadiran Pihak')
+                    ->getStateUsing(function ($record) {
+                        $dataCheckin = $record->checkins;
+
+
+
+
+                        $stringCheckin = $dataCheckin->map(function ($checkin) use ($record) {
+                            // Ambil nomor urut pihak (P1, P2, P3, T1, T2, dst.)
+                            $urutan = $checkin->urutan_pihak;
+
+
+                            // Tentukan singkatan dasar (P, T, I, dst.)
+                            if (str_contains($checkin->tipe_pihak, 'pihak1')) {
+                                $singkatanDasar = 'P';
+                                // 💡 OPTIMASI: Gunakan count() pada Collection yang sudah dimuat
+                                $countPihak = $record->pihak1->count();
+                                if ($countPihak > 1) {
+                                    $singkatanDasar .=  $urutan;
+                                }
+                            } elseif (str_contains($checkin->tipe_pihak, 'pihak2')) {
+                                // if ($record->nomor_perkara == '343/Pdt.G/2025/PN Tab') {
+                                //     dd('tes', $record->pihak2->count());
+                                // }
+                                $singkatanDasar = 'T';
+                                $countPihak = $record->pihak2->count();
+                                if ($countPihak > 1) {
+
+                                    $singkatanDasar .= $urutan;
+                                }
+                            } elseif (str_contains($checkin->tipe_pihak, 'pihak3')) {
+                                $singkatanDasar = 'I';
+                                $countPihak = $record->pihak3->count();
+                                if ($countPihak > 1) {
+                                    $singkatanDasar .= $urutan;
+                                }
+                            } else { // Asumsi pihak4 atau lainnya
+                                $singkatanDasar = 'TT';
+                                // Pastikan Anda memiliki relasi pihak4 di model Perkara
+                                $countPihak = $record->pihak4->count();
+                                if ($countPihak > 1) {
+                                    $singkatanDasar .= $urutan;
+                                }
+                            }
+
+                            // Tentukan prefix berdasarkan status kehadiran
+                            $prefix = ($checkin->status_kehadiran === 'kuasa') ? 'K' : '';
+
+                            // $hasilSingkatan = $singkatanDasar;
+
+                            // // Aturan: Jika jumlah pihak lebih dari 1, tambahkan nomor urut
+                            // // (Aturan yang Anda buat sedikit membingungkan, saya gunakan logika yang lebih umum)
+                            // // Logika Anda: Jika > 1, tambahkan $urutan. Jika = 1, jangan tambah $urutan.
+                            // if ($countPihak > 1) {
+                            //     $hasilSingkatan .= $urutan;
+                            // } else {
+                            //     // Jika hanya satu pihak, gunakan singkatan dasar tanpa nomor urut
+                            //     // Contoh: P (bukan P1)
+                            //     $hasilSingkatan;
+                            // }
+
+
+                            // Gabungkan: [Prefix][Hasil Singkatan]
+                            return $prefix . $singkatanDasar;
+                        })->implode(', ');
+                        return $stringCheckin;
+                    }),
 
                 TextColumn::make('hakim_ketua')
                     ->formatStateUsing(function ($record) {

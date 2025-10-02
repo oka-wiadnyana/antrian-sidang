@@ -27,6 +27,7 @@ class CheckinPublicController extends Controller
             'perkara_id' => 'required|integer',
             'tipe_pihak' => 'required|in:pihak1,pihak2,pihak3,pihak4',
             'nama_yang_hadir' => 'required|string',
+            'urutan_pihak' => 'required|numeric',
             'status_kehadiran' => 'required|in:pihak_langsung,kuasa',
             'jenis_sidang' => 'required|string',
             'latitude' => 'required|numeric',
@@ -54,6 +55,7 @@ class CheckinPublicController extends Controller
             'perkara_id' => $request->perkara_id,
             'tipe_pihak' => $request->tipe_pihak,
             'nama_yang_hadir' => $request->nama_yang_hadir,
+            'urutan_pihak' => $request->urutan_pihak,
             'status_kehadiran' => $request->status_kehadiran,
             'jenis_sidang' => $request->jenis_sidang,
             'latitude' => $request->latitude,
@@ -130,16 +132,24 @@ class CheckinPublicController extends Controller
 
         $perkara->setRelation('checkins', ($checkin) ? collect([$checkin]) : collect());
 
-        $pihak1 = PerkaraPihak1::where('perkara_id', $perkara_id)->get()->pluck('nama')->toArray();
-        $pihak2 = PerkaraPihak2::where('perkara_id', $perkara_id)->get()->pluck('nama')->toArray();
+        $pihak1 = PerkaraPihak1::where('perkara_id', $perkara_id)->get()->map(function ($item) {
+            return ['nama' => $item->nama, 'urutan_pihak' => $item->urutan];
+        })->toArray();
+        $pihak2 = PerkaraPihak2::where('perkara_id', $perkara_id)->get()->map(function ($item) {
+            return ['nama' => $item->nama, 'urutan_pihak' => $item->urutan];
+        })->toArray();
 
         // Hanya load pihak3 & pihak4 untuk gugatan
         $pihak3 = [];
         $pihak4 = [];
 
-        if (in_array($perkara->jenis_perkara, ['gugatan_cerai', 'gugatan_non_cerai', 'gugatan_sederhana'])) {
-            $pihak3 = PerkaraPihak3::where('perkara_id', $perkara_id)->get()->pluck('nama')->toArray();
-            $pihak4 = PerkaraPihak4::where('perkara_id', $perkara_id)->get()->pluck('nama')->toArray();
+        if (in_array($perkara->jenis_perkara, ['gugatan_cerai', 'gugatan_non_cerai', 'gugatan_sederhana', 'mediasi', 'pk'])) {
+            $pihak3 = PerkaraPihak3::where('perkara_id', $perkara_id)->get()->map(function ($item) {
+                return ['nama' => $item->nama, 'urutan_pihak' => $item->urutan];
+            })->toArray();
+            $pihak4 = PerkaraPihak4::where('perkara_id', $perkara_id)->get()->map(function ($item) {
+                return ['nama' => $item->nama, 'urutan_pihak' => $item->urutan];
+            })->toArray();
         }
 
         return response()->json([

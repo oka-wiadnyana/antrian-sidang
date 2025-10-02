@@ -277,6 +277,7 @@
                             <input type="hidden" name="perkara_id" id="form-perkara-id">
                             <input type="hidden" name="tipe_pihak" id="form-tipe-pihak">
                             <input type="hidden" name="nama_yang_hadir" id="form-nama-yang-hadir">
+                            <input type="hidden" name="urutan_pihak_yang_hadir" id="form-urutan-pihak-yang-hadir">
 
                             <!-- Info Pihak -->
                             <div class="alert alert-info">
@@ -286,7 +287,7 @@
 
                             <!-- Status Kedaieran -->
                             <div class="mb-3">
-                                <label class="form-label">Status Kedaieran</label>
+                                <label class="form-label">Status Kehadiran</label>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="status_kehadiran"
                                         id="status_langsung" value="pihak_langsung" checked>
@@ -597,17 +598,18 @@
 
                 // Pihak1
                 if (data.pihak1.length > 0) {
-                    data.pihak1.forEach(nama => {
-                        const idSafe = nama.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                    data.pihak1.forEach(pihak => {
+                        const idSafe = pihak.nama.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
                         html1 += `<div class="form-check mb-2">
                         <input class="form-check-input pihak-radio" 
                                type="radio" 
                                name="tipe_pihak" 
                                value="pihak1" 
-                               data-nama="${nama}"
+                               data-nama="${pihak.nama}"
+                               data-urutan-pihak="${pihak.urutan_pihak}"
                                id="pihak1_${idSafe}">
                         <label class="form-check-label" for="pihak1_${idSafe}">
-                            <i class="bi bi-person-circle"></i> ${nama}
+                            <i class="bi bi-person-circle"></i> ${pihak.nama}
                         </label>
                     </div>`;
                     });
@@ -621,17 +623,18 @@
                 if (data.jenis_perkara !== 'permohonan') {
                     // Pihak2
                     if (data.pihak2.length > 0) {
-                        data.pihak2.forEach(nama => {
-                            const idSafe = nama.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                        data.pihak2.forEach(pihak => {
+                            const idSafe = pihak.nama.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
                             html2 += `<div class="form-check mb-2">
                             <input class="form-check-input pihak-radio" 
                                    type="radio" 
                                    name="tipe_pihak" 
                                    value="pihak2" 
-                                   data-nama="${nama}"
+                                   data-nama="${pihak.nama}"
+                                    data-urutan-pihak="${pihak.urutan_pihak}"
                                    id="pihak2_${idSafe}">
                             <label class="form-check-label" for="pihak2_${idSafe}">
-                                <i class="bi bi-person-circle"></i> ${nama}
+                                <i class="bi bi-person-circle"></i> ${pihak.nama}
                             </label>
                         </div>`;
                         });
@@ -645,17 +648,18 @@
 
                     // Pihak3
                     if (data.pihak3.length > 0) {
-                        data.pihak3.forEach(nama => {
-                            const idSafe = nama.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                        data.pihak3.forEach(pihak => {
+                            const idSafe = pihak.nama.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
                             html3 += `<div class="form-check mb-2">
                             <input class="form-check-input pihak-radio" 
                                    type="radio" 
                                    name="tipe_pihak" 
                                    value="pihak3" 
-                                   data-nama="${nama}"
+                                   data-nama="${pihak.nama}"
+                                   data-urutan-pihak="${pihak.urutan_pihak}"
                                    id="pihak3_${idSafe}">
                             <label class="form-check-label" for="pihak3_${idSafe}">
-                                <i class="bi bi-person-plus"></i> ${nama}
+                                <i class="bi bi-person-plus"></i> ${pihak.nama}
                             </label>
                         </div>`;
                         });
@@ -669,17 +673,18 @@
 
                     // Pihak4
                     if (data.pihak4.length > 0) {
-                        data.pihak4.forEach(nama => {
-                            const idSafe = nama.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                        data.pihak4.forEach(pihak => {
+                            const idSafe = pihak.nama.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
                             html4 += `<div class="form-check mb-2">
                             <input class="form-check-input pihak-radio" 
                                    type="radio" 
                                    name="tipe_pihak" 
                                    value="pihak4" 
-                                   data-nama="${nama}"
+                                   data-nama="${pihak.nama}"
+                                   data-urutan-pihak="${pihak.urutan_pihak}"
                                    id="pihak4_${idSafe}">
                             <label class="form-check-label" for="pihak4_${idSafe}">
-                                <i class="bi bi-people"></i> ${nama}
+                                <i class="bi bi-people"></i> ${pihak.nama}
                             </label>
                         </div>`;
                         });
@@ -767,11 +772,13 @@
             // Pilih pihak → isi hidden input
             $(document).on('change', '.pihak-radio', function() {
                 const namaPihak = $(this).data('nama');
+                const urutanPihak = $(this).data('urutan-pihak');
                 const tipePihak = $(this).val();
 
                 // ISI HIDDEN INPUT — INI YANG PALING PENTING!
                 $('#form-tipe-pihak').val(tipePihak);
                 $('#form-nama-yang-hadir').val(namaPihak);
+                $('#form-urutan-pihak-yang-hadir').val(urutanPihak);
                 $('#form-perkara-id').val($('#perkara_id').val()); // ← JANGAN LUPA INI!
 
                 // Tampilkan info
@@ -811,11 +818,13 @@
                 console.log('perkara_id:', $('#form-perkara-id').val());
                 console.log('tipe_pihak:', $('#form-tipe-pihak').val());
                 console.log('nama_yang_hadir:', $('#form-nama-yang-hadir').val());
+                console.log('urutan_pihak_yang_hadir:', $('#form-urutan-pihak-yang-hadir').val());
                 console.log('status_kehadiran:', $('input[name="status_kehadiran"]:checked').val());
                 console.log('jenis_sidang:', $('[name="jenis_sidang"]').val());
                 console.log('latitude:', $('#latitude').val());
                 console.log('longitude:', $('#longitude').val());
                 console.log('jarak_meter:', $('#jarak_meter').val());
+
 
                 // Validasi client-side
                 if (!$('#form-tipe-pihak').val()) {
@@ -830,6 +839,7 @@
                 const formData = {
                     perkara_id: $('#form-perkara-id').val(),
                     tipe_pihak: $('#form-tipe-pihak').val(),
+                    urutan_pihak: $('#form-urutan-pihak-yang-hadir').val(),
                     nama_yang_hadir: $('#form-nama-yang-hadir').val(),
                     status_kehadiran: $('input[name="status_kehadiran"]:checked').val(),
                     jenis_sidang: $('[name="jenis_sidang"]').val(),
