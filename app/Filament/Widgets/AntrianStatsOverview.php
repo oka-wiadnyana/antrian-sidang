@@ -19,6 +19,8 @@ class AntrianStatsOverview extends BaseWidget
     {
         $today = now()->format('Y-m-d');
         $hearingTime = HearingTime::all()->pluck('time', 'jenis_perkara')->toArray();
+
+
         // dd($hearingTime);
         $perkaraIdsYangHadir = CheckinPihak::query()
             ->whereDate('waktu_checkin', now())
@@ -44,8 +46,8 @@ class AntrianStatsOverview extends BaseWidget
                 }
             }
 
-            if ($key == 'permohonan') {
-                if (now()->hour >= $value) {
+            if ($key == 'gugatan_sederhana') {
+                if (now()->format("H:i:s") >= $value) {
                     $perkaraGsHadir = PerkaraJadwalSidang::query()
                         ->whereIn('perkara_id', $perkaraIdsYangHadir)
                         ->where('tanggal_sidang', $today)
@@ -61,7 +63,9 @@ class AntrianStatsOverview extends BaseWidget
             }
             if ($key == 'gugatan_cerai') {
 
-                if (now()->hour >= $value) {
+
+                if (now()->format("H:i:s") >= $value) {
+
 
                     $perkaraCeraihadir = PerkaraJadwalSidang::query()
                         ->whereIn('perkara_id', $perkaraIdsYangHadir)
@@ -79,7 +83,7 @@ class AntrianStatsOverview extends BaseWidget
             }
             if ($key == 'gugatan_non_cerai') {
 
-                if (now()->hour >= $value) {
+                if (now()->format("H:i:s") >= $value) {
 
                     $perkaraNonCeraihadir = PerkaraJadwalSidang::query()
                         ->whereIn('perkara_id', $perkaraIdsYangHadir)
@@ -100,7 +104,7 @@ class AntrianStatsOverview extends BaseWidget
             }
             if ($key == 'pidana') {
 
-                if (now()->hour >= $value) {
+                if (now()->format("H:i:s") >= $value) {
 
                     $perkaraPidanahadir = PerkaraJadwalSidang::query()
                         ->whereIn('perkara_id', $perkaraIdsYangHadir)
@@ -120,7 +124,7 @@ class AntrianStatsOverview extends BaseWidget
             }
             if ($key == 'mediasi') {
 
-                if (now()->hour >= $value) {
+                if (now()->format("H:i:s") >= $value) {
 
                     $perkaraMediasihadir = PerkaraMediasi::query()
                         ->whereHas('jadwalMediasi', function ($q) use ($today) {
@@ -137,7 +141,7 @@ class AntrianStatsOverview extends BaseWidget
             }
             if ($key == 'pk') {
 
-                if (now()->hour >= $value) {
+                if (now()->format("H:i:s") >= $value) {
 
                     $perkaraPkhadir = PerkaraJadwalPemeriksaanPk::query()
                         ->where('tanggal_pemeriksaan', $today)
@@ -152,7 +156,7 @@ class AntrianStatsOverview extends BaseWidget
             }
         }
 
-        // if (now()->hour >= 9) {
+        // if (now()->format("H:i:s") >= 9) {
         //     $perkaraGsHadir = PerkaraJadwalSidang::query()
         //         ->whereIn('perkara_id', $perkaraIdsYangHadir)
         //         ->where('tanggal_sidang', $today)
@@ -166,7 +170,7 @@ class AntrianStatsOverview extends BaseWidget
         //     $perkaraGsHadir = new Collection();
         // }
 
-        // if (now()->hour >= 11) {
+        // if (now()->format("H:i:s") >= 11) {
 
         //     $perkaraCeraihadir = PerkaraJadwalSidang::query()
         //         ->whereIn('perkara_id', $perkaraIdsYangHadir)
@@ -182,7 +186,7 @@ class AntrianStatsOverview extends BaseWidget
         //     $perkaraCeraihadir = new Collection();
         // }
 
-        // if (now()->hour >= 14) {
+        // if (now()->format("H:i:s") >= 14) {
 
         //     $perkaraNonCeraihadir = PerkaraJadwalSidang::query()
         //         ->whereIn('perkara_id', $perkaraIdsYangHadir)
@@ -201,7 +205,7 @@ class AntrianStatsOverview extends BaseWidget
         //     $perkaraNonCeraihadir = new Collection();
         // }
 
-        // if (now()->hour >= 14) {
+        // if (now()->format("H:i:s") >= 14) {
         //     $perkaraPidanahadir = PerkaraJadwalSidang::query()
         //         ->whereIn('perkara_id', $perkaraIdsYangHadir)
         //         ->where('tanggal_sidang', $today)
