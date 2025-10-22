@@ -7,7 +7,6 @@
     <title>🖥️ LAYAR ANTRIAN SIDANG — PENGADILAN</title>
     <link rel="icon" href="{{ asset('storage/img/logo_ma.png') }}" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    {{-- <meta http-equiv="refresh" content="180"> --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -62,54 +61,144 @@
             line-height: 1.4;
         }
 
-        .queue-container {
-            height: calc(100vh - 180px);
-            overflow: hidden;
+        /* === CAROUSEL SYSTEM === */
+        .carousel-container {
+            height: calc(100vh - 260px);
             position: relative;
+            overflow: hidden;
             padding: 0 1.5rem;
         }
 
-        .queue-scroll {
+        .carousel-wrapper {
+            display: flex;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
             height: 100%;
-            animation: scrollUp 50s linear infinite;
+        }
+
+        .carousel-slide {
+            min-width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            padding: 1rem 0;
+            scrollbar-width: thin;
+            scrollbar-color: #00ff00 #000;
+        }
+
+        .carousel-slide::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .carousel-slide::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        .carousel-slide::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 4px;
+        }
+
+        /* === CAROUSEL NAVIGATION === */
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s;
+            font-size: 1.5rem;
+        }
+
+        .carousel-nav:hover {
+            background: rgba(0, 255, 0, 0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .carousel-nav.prev {
+            left: 10px;
+        }
+
+        .carousel-nav.next {
+            right: 10px;
+        }
+
+        /* === CAROUSEL INDICATORS === */
+        .carousel-indicators {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid #00ff00;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .indicator.active {
+            background: #00ff00;
+            width: 40px;
+            border-radius: 6px;
         }
 
         /* === Header Majelis dengan Warna Berbeda === */
         .section-header {
-            padding: 0.8rem 0 0.8rem 1rem;
-            margin: 1.4rem 0 1rem 0;
-            font-size: 1.3rem;
+            padding: 1rem;
+            margin: 0 0 1.5rem 0;
+            font-size: 1.8rem;
             font-weight: 700;
-            text-align: left;
+            text-align: center;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            border-left: 4px solid;
+            letter-spacing: 2px;
+            border: 2px solid;
             background: #111;
+            border-radius: 8px;
         }
 
         .header-permohonan {
             color: #63b3ed;
-            border-left-color: #3182ce;
+            border-color: #3182ce;
+            box-shadow: 0 0 20px rgba(49, 130, 206, 0.3);
         }
 
         .header-gugatan {
             color: #68d391;
-            border-left-color: #38a169;
+            border-color: #38a169;
+            box-shadow: 0 0 20px rgba(56, 161, 105, 0.3);
         }
 
         .header-pidana {
             color: #fc8181;
-            border-left-color: #e53e3e;
+            border-color: #e53e3e;
+            box-shadow: 0 0 20px rgba(229, 62, 62, 0.3);
         }
 
         .header-perdata {
             color: #b794f6;
-            border-left-color: #805ad5;
+            border-color: #805ad5;
+            box-shadow: 0 0 20px rgba(128, 90, 213, 0.3);
         }
 
         .header-lain {
             color: #feb272;
-            border-left-color: #dd6b20;
+            border-color: #dd6b20;
+            box-shadow: 0 0 20px rgba(221, 107, 32, 0.3);
         }
 
         /* === Header Kolom === */
@@ -136,6 +225,19 @@
             font-size: 1.4rem;
             font-weight: 600;
             gap: 12px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .queue-number {
@@ -212,43 +314,27 @@
 
         .empty-queue {
             color: #888;
-            padding: 1.5rem 0;
+            padding: 3rem 0;
             text-align: center;
+            font-size: 1.5rem;
             grid-column: 1 / -1;
-        }
-
-        @keyframes scrollUp {
-            0% {
-                transform: translateY(100%);
-            }
-
-            100% {
-                transform: translateY(-100%);
-            }
-        }
-
-        .queue-scroll {
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-
-        .queue-scroll::-webkit-scrollbar {
-            display: none;
         }
 
         /* === MOBILE RESPONSIVE — DIPERBAIKI === */
         @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .section-header {
+                font-size: 1.3rem;
+            }
 
             .queue-header,
             .queue-item {
                 grid-template-columns: 45px 1fr 80px auto;
-                /* Gabungkan Kehadiran + Status */
                 font-size: 1.25rem;
                 gap: 8px;
-            }
-
-            .section-header {
-                font-size: 1.2rem;
             }
 
             .case-number {
@@ -257,13 +343,12 @@
 
             .queue-header {
                 display: none;
-                /* Sembunyikan header kolom di mobile */
             }
 
-            /* Ubah layout Kehadiran & Status jadi vertikal */
-            .queue-item {
-                grid-template-columns: 45px 1fr 80px auto;
-                gap: 8px;
+            .carousel-nav {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
             }
 
             .attendance-status,
@@ -322,16 +407,18 @@
         </div>
     </div>
 
-    <div class="queue-container">
-        <div class="queue-scroll" id="queue-scroll">
-            <!-- Konten utama -->
-            <div class="queue-content">
-                @if ($antrian->count() > 0)
-                    @php
-                        // 1. Inisialisasi variabel penomor Majelis HANYA SEKALI
-                        $majelisNo = 1;
-                    @endphp
-                    @foreach ($antrian as $kelompok => $perkaraList)
+    <div class="carousel-container">
+        <div class="carousel-nav prev" onclick="prevSlide()">
+            <i class="fas fa-chevron-left"></i>
+        </div>
+
+        <div class="carousel-wrapper" id="carousel">
+            @if ($antrian->count() > 0)
+                @php
+                    $majelisNo = 1;
+                @endphp
+                @foreach ($antrian as $kelompok => $perkaraList)
+                    <div class="carousel-slide">
                         <div
                             class="section-header 
                             @if ($kelompok === 'PERMOHONAN') header-permohonan
@@ -341,19 +428,10 @@
                             @else header-lain @endif">
                             @if ($kelompok === 'PERMOHONAN')
                                 <i class="fas fa-file-alt"></i> PERMOHONAN
-                                {{-- @php
-                                    $no = $no;
-                                @endphp --}}
                             @elseif($kelompok === 'GUGATAN SEDERHANA')
                                 <i class="fas fa-balance-scale"></i> GUGATAN SEDERHANA
-                                {{-- @php
-                                    $no = $no;
-                                @endphp --}}
                             @elseif($kelompok === 'MEDIASI')
                                 <i class="fas fa-balance-scale"></i> MEDIASI
-                                {{-- @php
-                                    $no = $no;
-                                @endphp --}}
                             @else
                                 <i class="fas fa-user-tie"></i> Majelis Hakim {{ $majelisNo++ }}
                             @endif
@@ -400,85 +478,25 @@ $sidangStatus = \App\Models\CheckinPihak::where('perkara_id', $p->perkara_id)
                         @else
                             <div class="empty-queue">Tidak ada perkara</div>
                         @endif
-                    @endforeach
-                @else
+                    </div>
+                @endforeach
+            @else
+                <div class="carousel-slide">
                     <div class="empty-queue">
                         <i class="fas fa-exclamation-circle"></i><br>
                         TIDAK ADA PERKARA HARI INI
                     </div>
-                @endif
-            </div>
-
-            <!-- Duplikat untuk scroll seamless -->
-            <div class="queue-content">
-                @if ($antrian->count() > 0)
-                    @php
-                        // 1. Inisialisasi variabel penomor Majelis HANYA SEKALI
-                        $majelisNo = 1;
-                    @endphp
-                    @foreach ($antrian as $kelompok => $perkaraList)
-                        <div
-                            class="section-header 
-                            @if ($kelompok === 'PERMOHONAN') header-permohonan
-                            @elseif($kelompok === 'GUGATAN SEDERHANA') header-gugatan
-                            @elseif($kelompok === 'PIDANA') header-pidana
-                            @elseif($kelompok === 'PERDATA') header-perdata
-                            @else header-lain @endif">
-                            @if ($kelompok === 'PERMOHONAN')
-                                <i class="fas fa-file-alt"></i> PERMOHONAN
-                            @elseif($kelompok === 'GUGATAN SEDERHANA')
-                                <i class="fas fa-balance-scale"></i> GUGATAN SEDERHANA
-                            @elseif($kelompok === 'MEDIASI')
-                                <i class="fas fa-balance-scale"></i> MEDIASI
-                            @else
-                                <i class="fas fa-user-tie"></i> Majelis Hakim {{ $majelisNo++ }}
-                            @endif
-                        </div>
-
-                        <div class="queue-header">
-                            <div>NO</div>
-                            <div>NOMOR PERKARA</div>
-                            <div>JENIS</div>
-                            <div>KEHADIRAN</div>
-                            <div>STATUS</div>
-                        </div>
-
-                        @if ($perkaraList->count() > 0)
-                            @foreach ($perkaraList as $index => $p)
-                                <div class="queue-item">
-                                    <div class="queue-number">{{ $index + 1 }}</div>
-                                    <div class="case-number">{{ $p->nomor_perkara }}</div>
-                                    <div class="case-type">{{ strtoupper(substr($p->jenis_perkara, 0, 3)) }}</div>
-                                    <div
-                                        class="attendance-status {{ $p->status_kehadiran_pihak === 'Hadir' ? 'status-present' : 'status-absent' }}">
-                                        {{ $p->status_kehadiran_pihak }}
-                                    </div>
-                                    <div
-                                        class="session-status 
-                                        @php
-$sidangStatus = \App\Models\CheckinPihak::where('perkara_id', $p->perkara_id)
-                                                ->whereDate('waktu_checkin', $today)
-                                                ->first();
-                                            $status = optional($sidangStatus)->status_sidang;
-                                            if ($status === 'sedang_berlangsung') echo 'status-ongoing';
-                                            elseif ($status === 'belum_mulai') echo 'status-waiting';
-                                            else echo 'status-completed'; @endphp">
-                                        @if ($status === 'sedang_berlangsung')
-                                            SEDANG BERLANGSUNG
-                                        @elseif($status === 'belum_mulai')
-                                            BELUM MULAI
-                                        @else
-                                            SELESAI
-                                        @endif
-                                    </div>
-                                </div>
-                            @endforeach
-                        @endif
-                    @endforeach
-                @endif
-            </div>
+                </div>
+            @endif
         </div>
+
+        <div class="carousel-nav next" onclick="nextSlide()">
+            <i class="fas fa-chevron-right"></i>
+        </div>
+
+        <div class="carousel-indicators" id="indicators"></div>
     </div>
+
     @vite(['resources/js/app.js'])
     <script>
         document.addEventListener("DOMContentLoaded", () => {
@@ -507,6 +525,74 @@ $sidangStatus = \App\Models\CheckinPihak::where('perkara_id', $p->perkara_id)
         updateTime();
     </script>
 
+    <script>
+        // === CAROUSEL FUNCTIONALITY ===
+        let currentSlide = 0;
+        const carousel = document.getElementById('carousel');
+        const slides = document.querySelectorAll('.carousel-slide');
+        const totalSlides = slides.length;
+        const indicatorsContainer = document.getElementById('indicators');
+
+        // Auto-rotate interval (8 detik per slide)
+        const autoRotateInterval = 8000;
+        let autoRotateTimer;
+
+        // Create indicators
+        for (let i = 0; i < totalSlides; i++) {
+            const indicator = document.createElement('div');
+            indicator.className = 'indicator';
+            if (i === 0) indicator.classList.add('active');
+            indicator.onclick = () => goToSlide(i);
+            indicatorsContainer.appendChild(indicator);
+        }
+
+        function updateCarousel() {
+            carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+            // Update indicators
+            document.querySelectorAll('.indicator').forEach((ind, idx) => {
+                ind.classList.toggle('active', idx === currentSlide);
+            });
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            updateCarousel();
+            resetAutoRotate();
+        }
+
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            updateCarousel();
+            resetAutoRotate();
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateCarousel();
+            resetAutoRotate();
+        }
+
+        function startAutoRotate() {
+            autoRotateTimer = setInterval(nextSlide, autoRotateInterval);
+        }
+
+        function resetAutoRotate() {
+            clearInterval(autoRotateTimer);
+            startAutoRotate();
+        }
+
+        // Initialize
+        if (totalSlides > 1) {
+            startAutoRotate();
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') prevSlide();
+            if (e.key === 'ArrowRight') nextSlide();
+        });
+    </script>
 </body>
 
 </html>
