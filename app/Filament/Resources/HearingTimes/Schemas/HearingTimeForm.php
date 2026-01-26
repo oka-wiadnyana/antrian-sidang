@@ -23,6 +23,7 @@ class HearingTimeForm
                         'pidana' => 'pidana',
                         'mediasi' => 'mediasi',
                         'pk' => 'pk',
+                        'praperadilan' => 'praperadilan',
                     ])
                     ->required(),
                 TimePicker::make('time')

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CheckinPihak;
 use App\Models\Perkara;
+use App\Models\HearingTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -70,6 +71,11 @@ class AntrianUmumController extends Controller
         if ($pk->count() > 0) {
             $antrian->put('PK', $pk);
         }
+        $pk = $perkaraSiap->filter(fn($p) => $p->jenis_perkara === 'praperadilan')->values();
+        // dd($mediasi);
+        if ($pk->count() > 0) {
+            $antrian->put('PRAPERADILAN', $pk);
+        }
 
         // 5. Kelompok per hakim: Gugatan Cerai & Non-Cerai — values() otomatis di groupBy
         $gugatanLain = $perkaraSiap->filter(fn($p) => in_array($p->jenis_perkara, ['gugatan_cerai', 'gugatan_non_cerai', 'pidana',]));
@@ -78,9 +84,11 @@ class AntrianUmumController extends Controller
             $antrian->put($hakim, $perkaraList);
         }
 
+        $hearingTime = HearingTime::all();
+        // dd($hearingTime->pluck('time', 'jenis_perkara'));
         // dd($antrian);
 
 
-        return view('antrian.umum', compact('antrian', 'today'));
+        return view('antrian.umum', compact('antrian', 'today', 'hearingTime'));
     }
 }

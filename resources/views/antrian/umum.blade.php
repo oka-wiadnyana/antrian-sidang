@@ -403,7 +403,14 @@
         <div class="date">{{ now()->isoFormat('dddd, D MMMM YYYY') }}</div>
         <div class="clock" id="current-time">{{ now()->format('H:i:s') }}</div>
         <div class="notice">
-            <strong>Catatan:</strong> Permohonan: 09.00 | Perceraian: 11.00 | Lainnya: 14.00 WITA
+            <strong>Catatan:</strong>
+            @foreach ($hearingTime as $time)
+                @if ($loop->last)
+                    {{ implode(' ', explode('_', $time->jenis_perkara)) }} : {{ $time->time }}
+                @else
+                    {{ implode(' ', explode('_', $time->jenis_perkara)) }} : {{ $time->time }} |
+                @endif
+            @endforeach
         </div>
     </div>
 

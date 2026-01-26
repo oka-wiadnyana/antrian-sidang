@@ -33,44 +33,65 @@ class ListAntrianSidangs extends ListRecords
 {
     protected static string $resource = AntrianSidangResource::class;
 
-    public function getTabs(): array
+    protected function getPerkaraWithCheckins(string $date): Collection
     {
-        $now = now()->format('Y-m-d');
         $perkaraHariIni = static::getResource()::getEloquentQuery()
-            ->whereHas('jadwal', function ($q) use ($now) {
-                $q->whereDate('tanggal_sidang', $now);
-            })
-            ->orWherehas('jadwalMediasi', function ($q) use ($now) {
-                $q->whereDate('tanggal_mediasi', $now);
-            })
-            ->orWherehas('jadwalPk', function ($q) use ($now) {
-                $q->whereDate('tanggal_pemeriksaan', $now);
-            })
-            ->with(['hakim' => fn($q) => $q->where('jabatan_hakim_id', 1)])
+            ->whereHas('jadwal', fn($q) => $q->whereDate('tanggal_sidang', $date))
+            ->orWherehas('jadwalMediasi', fn($q) => $q->whereDate('tanggal_mediasi', $date))
+            ->orWherehas('jadwalPk', fn($q) => $q->whereDate('tanggal_pemeriksaan', $date))
+            ->withCount(['pihak1', 'pihak2', 'pihak3', 'pihak4'])
+            ->with([
+                'hakim' => fn($q) => $q->where('jabatan_hakim_id', 1),
+                'mediasi',
+                'jadwalMediasi' => fn($q) => $q->whereDate('tanggal_mediasi', $date),
+                'jadwalPk' => fn($q) => $q->whereDate('tanggal_pemeriksaan', $date),
+                'jadwal' => fn($q) => $q->whereDate('tanggal_sidang', $date),
+                'pihak1',
+                'pihak2',
+                'pihak3',
+                'pihak4',
+            ])
             ->get();
 
         $perkaraIds = $perkaraHariIni->pluck('perkara_id');
+
         $allCheckins = CheckinPihak::whereIn('perkara_id', $perkaraIds)
+            ->whereDate('waktu_checkin', $date)
+            ->orderBy('waktu_checkin', 'asc')
             ->get()
             ->groupBy('perkara_id');
 
+        $perkaraHariIni->each(
+            fn($perkara) =>
+            $perkara->setRelation('checkins', $allCheckins->get($perkara->perkara_id, collect()))
+        );
 
+        return $perkaraHariIni;
+    }
+
+    // ✅ Refactor getTabs()
+    public function getTabs(): array
+    {
+        $now = now()->format('Y-m-d');
+        // $now = "2026-01-26";
+
+        $perkaraHariIni = $this->getPerkaraWithCheckins($now);
+
+        // Filter hanya yang ada check-in
+        $perkaraWithCheckins = $perkaraHariIni->filter(fn($p) => $p->checkins->isNotEmpty());
 
         $hakimKeys = collect();
-        foreach ($perkaraHariIni as $perkara) {
-            $perkara->setRelation(
-                'checkins',
-                $allCheckins->get($perkara->perkara_id, collect())
-            );
+
+        foreach ($perkaraWithCheckins as $perkara) {
             if ($perkara->checkins->contains('jenis_sidang', 'mediasi')) {
                 $key = 'mediasi';
             } elseif ($perkara->checkins->contains('jenis_sidang', 'pk')) {
                 $key = 'pk';
             } else {
-
                 $key = match ($perkara->alur_perkara_id) {
                     2 => 'permohonan',
                     8 => 'gugatan_sederhana',
+                    119 => 'praperadilan',
                     default => optional($perkara->hakim->first())->hakim_nama ?? 'Hakim Tidak Ditemukan',
                 };
             }
@@ -81,118 +102,76 @@ class ListAntrianSidangs extends ListRecords
         $tabs = collect();
 
         foreach ($uniqueKeys as $hakim) {
-            if ($hakim === 'permohonan') {
-                $tab = Tab::make('permohonan', 'Permohonan');
-            } elseif ($hakim === 'gugatan_sederhana') {
-                $tab = Tab::make('gugatan_sederhana', 'GS');
-            } elseif ($hakim === 'mediasi') {
-                $tab = Tab::make('mediasi', 'Mediasi');
-            } elseif ($hakim === 'pk') {
-                $tab = Tab::make('pk', 'PK');
-            } else {
-                $tab = Tab::make($hakim, $hakim);
-            }
+            $tab = match ($hakim) {
+                'permohonan' => Tab::make('permohonan', 'Permohonan'),
+                'gugatan_sederhana' => Tab::make('gugatan_sederhana', 'GS'),
+                'mediasi' => Tab::make('mediasi', 'Mediasi'),
+                'pk' => Tab::make('pk', 'PK'),
+                'praperadilan' => Tab::make('praperadilan', 'PRAPERADILAN'),
+                default => Tab::make($hakim, $hakim),
+            };
 
             $tabs->put($hakim, $tab);
         }
 
-        // Gunakan prepend untuk menambahkan tab 'semua' di awal dengan kunci 'semua'
         $tabs->prepend(Tab::make('semua', 'Semua'), 'semua');
 
         return $tabs->toArray();
     }
 
+    // ✅ Refactor getTableRecords()
     public function getTableRecords(): Collection
     {
-        // ... (Langkah 1 - 4: Logika yang sudah kita perbaiki)
-
         $selectedTab = $this->activeTab;
         $now = now()->format('Y-m-d');
+        // $now = "2026-01-26";
 
-        // Ambil dan gabungkan data...
-        $perkaraHariIni = static::getResource()::getEloquentQuery()
-            ->whereHas('jadwal', fn($q) => $q->whereDate('tanggal_sidang', $now))
-            ->orWherehas('jadwalMediasi', function ($q) use ($now) {
-                $q->whereDate('tanggal_mediasi', $now);
-            })
-            ->orWherehas('jadwalPk', function ($q) use ($now) {
-                $q->whereDate('tanggal_pemeriksaan', $now);
-            })
-            ->with([
-                'hakim' => fn($q) => $q->where('jabatan_hakim_id', 1),
-                'mediasi',
-                'jadwalMediasi' => function ($q) use ($now) {
-                    $q->whereDate('tanggal_mediasi', $now);
-                },
-                'jadwalPk' => function ($q) use ($now) {
-                    $q->whereDate('tanggal_pemeriksaan', $now);
-                },
-                'jadwal' => function ($q) use ($now) {
-                    $q->whereDate('tanggal_sidang', $now);
-                },
-                'pihak1',
-                'pihak2',
+        // ✅ Reuse shared method
+        $perkaraHariIni = $this->getPerkaraWithCheckins($now);
 
-                'pihak3',
-                'pihak4',
-            ])
-            ->get();
-
-        $perkaraIds = $perkaraHariIni->pluck('perkara_id');
-        $allCheckins = CheckinPihak::whereIn('perkara_id', $perkaraIds)
-            ->whereDate('waktu_checkin', $now)
-            ->orderBy('waktu_checkin', 'asc')
-            ->get()
-            ->groupBy('perkara_id');
-        // dd($allCheckins);
-
-        $perkaraHariIni->each(fn($perkara) => $perkara->setRelation('checkins', $allCheckins->get($perkara->perkara_id, collect())));
-
-        // dd($perkaraHariIni->pluck('checkins', 'nomor_perkara'));
-
-        // Langkah 4: Terapkan filter berdasarkan tab yang aktif
+        // Filter berdasarkan tab
         $filteredPerkara = $perkaraHariIni->filter(function ($perkara) use ($selectedTab) {
-            // Logika filter tab Anda...
             if ($selectedTab === null || $selectedTab === 'semua' || $selectedTab === '') {
                 return true;
             } elseif ($selectedTab === 'mediasi') {
-                return (int) $perkara->checkins->contains('jenis_sidang', 'mediasi');
-            } elseif ($selectedTab === 'mediasi') {
-                return (int) $perkara->checkins->contains('jenis_sidang', 'pk');
+                return $perkara->checkins->contains('jenis_sidang', 'mediasi');
+            } elseif ($selectedTab === 'pk') {
+                return $perkara->checkins->contains('jenis_sidang', 'pk');
             } elseif ($selectedTab === 'permohonan') {
                 return (int) $perkara->alur_perkara_id === 2;
             } elseif ($selectedTab === 'gugatan_sederhana') {
                 return (int) $perkara->alur_perkara_id === 8;
-            } else { // Tab Hakim
+            } elseif ($selectedTab === 'praperadilan') {
+                return (int) $perkara->alur_perkara_id === 119;
+            } else {
                 $hakim = optional($perkara->hakim->first());
                 return $hakim && $hakim->hakim_nama === $selectedTab;
             }
         });
-        // dd($filteredPerkara->pluck('jadwalMediasi', 'nomor_perkara'));
 
-        // --- DI SINI ANDA MENAMBAHKAN FILTER TAMBAHAN ---
-        // Filter untuk hanya menampilkan perkara yang memiliki check-in
+        // Filter hanya yang ada check-in
         $filteredPerkara = $filteredPerkara->filter(fn($perkara) => $perkara->checkins->isNotEmpty());
 
+        // Sorting
+        return $filteredPerkara->sort(function ($a, $b) {
+            $waktuSidangA = $a->waktu_sidang_efektif?->timestamp ?? PHP_INT_MAX;
+            $waktuSidangB = $b->waktu_sidang_efektif?->timestamp ?? PHP_INT_MAX;
 
-        // Langkah 5: Urutkan data berdasarkan waktu check-in
-        return $filteredPerkara->sortBy(function ($perkara) {
-            // Ambil waktu check-in dari model CheckinPihak yang pertama
-            // Jika ada lebih dari satu, Anda bisa memilih logika yang berbeda (misalnya, yang paling awal)
-            $checkin = $perkara->checkins->first();
+            $waktuSidangCompare = $waktuSidangA <=> $waktuSidangB;
+            if ($waktuSidangCompare !== 0) {
+                return $waktuSidangCompare;
+            }
 
-            // Pastikan ada data checkin sebelum mencoba mengakses propertinya
-            return $checkin ? $checkin->waktu_checkin : null;
-        })->sortBy('hakim_ketua');
+            $checkinA = $a->checkins->first()?->waktu_checkin?->timestamp ?? PHP_INT_MAX;
+            $checkinB = $b->checkins->first()?->waktu_checkin?->timestamp ?? PHP_INT_MAX;
 
-        // Langkah 5: Urutkan data yang sudah difilter
-        // return $filteredPerkara;
+            return $checkinA <=> $checkinB;
+        })->values();
     }
 
-    public  function table(Table $table): Table
+    public function table(Table $table): Table
     {
         return $table
-            // ->query(static::getResource()::getEloquentQuery())
             ->toolbarActions([])
             ->columns([
                 TextColumn::make('nomor_perkara')
@@ -200,100 +179,72 @@ class ListAntrianSidangs extends ListRecords
                     ->sortable()
                     ->label('Nomor Perkara'),
 
-
-
-
                 TextColumn::make('kehadiran_pihak_custom')
                     ->label('Kehadiran Pihak')
                     ->getStateUsing(function ($record) {
                         $dataCheckin = $record->checkins;
 
-
-
-
                         $stringCheckin = $dataCheckin->map(function ($checkin) use ($record) {
-                            // Ambil nomor urut pihak (P1, P2, P3, T1, T2, dst.)
                             $urutan = $checkin->urutan_pihak;
 
-
-                            // Tentukan singkatan dasar (P, T, I, dst.)
                             if (str_contains($checkin->tipe_pihak, 'pihak1')) {
                                 $singkatanDasar = 'P';
-                                // 💡 OPTIMASI: Gunakan count() pada Collection yang sudah dimuat
-                                $countPihak = $record->pihak1->count();
+                                $countPihak = $record->pihak1_count;
                                 if ($countPihak > 1) {
-                                    $singkatanDasar .=  $urutan;
+                                    $singkatanDasar .= $urutan;
                                 }
                             } elseif (str_contains($checkin->tipe_pihak, 'pihak2')) {
-                                // if ($record->nomor_perkara == '343/Pdt.G/2025/PN Tab') {
-                                //     dd('tes', $record->pihak2->count());
-                                // }
                                 $singkatanDasar = 'T';
-                                $countPihak = $record->pihak2->count();
+                                $countPihak = $record->pihak2_count;
                                 if ($countPihak > 1) {
-
                                     $singkatanDasar .= $urutan;
                                 }
                             } elseif (str_contains($checkin->tipe_pihak, 'pihak3')) {
                                 $singkatanDasar = 'I';
-                                $countPihak = $record->pihak3->count();
+                                $countPihak = $record->pihak3_count;
                                 if ($countPihak > 1) {
                                     $singkatanDasar .= $urutan;
                                 }
-                            } else { // Asumsi pihak4 atau lainnya
+                            } else {
                                 $singkatanDasar = 'TT';
-                                // Pastikan Anda memiliki relasi pihak4 di model Perkara
-                                $countPihak = $record->pihak4->count();
+                                $countPihak = $record->pihak4_count;
                                 if ($countPihak > 1) {
                                     $singkatanDasar .= $urutan;
                                 }
                             }
 
-                            // Tentukan prefix berdasarkan status kehadiran
                             $prefix = ($checkin->status_kehadiran === 'kuasa') ? 'K' : '';
-
-                            // $hasilSingkatan = $singkatanDasar;
-
-                            // // Aturan: Jika jumlah pihak lebih dari 1, tambahkan nomor urut
-                            // // (Aturan yang Anda buat sedikit membingungkan, saya gunakan logika yang lebih umum)
-                            // // Logika Anda: Jika > 1, tambahkan $urutan. Jika = 1, jangan tambah $urutan.
-                            // if ($countPihak > 1) {
-                            //     $hasilSingkatan .= $urutan;
-                            // } else {
-                            //     // Jika hanya satu pihak, gunakan singkatan dasar tanpa nomor urut
-                            //     // Contoh: P (bukan P1)
-                            //     $hasilSingkatan;
-                            // }
-
-
-                            // Gabungkan: [Prefix][Hasil Singkatan]
                             return $prefix . $singkatanDasar;
                         })->implode(', ');
+
                         return $stringCheckin;
                     }),
 
                 TextColumn::make('status_sidang')
                     ->badge()
                     ->color(function (Perkara $record) {
-                        $checkin = \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
-                            ->whereDate('waktu_checkin', now()->format('Y-m-d'))
-                            ->first();
-                        return match ($checkin->status_sidang) {
+                        $checkin = $record->checkins->first();
+
+                        return match ($checkin?->status_sidang) {
                             'selesai' => 'info',
                             'belum_mulai' => 'warning',
-
                             'sedang_berlangsung' => 'success',
                             default => 'secondary',
                         };
                     })
                     ->getStateUsing(function (Perkara $record) {
-                        $checkin = \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
-                            ->whereDate('waktu_checkin', now()->format('Y-m-d'))
-                            ->first();
+                        $checkin = $record->checkins->first();
 
-                        return $checkin->status_sidang == 'sedang_berlangsung' ? 'Sedang Berlangsung' : ($checkin->status_sidang == 'selesai' ? 'Selesai' : 'Belum Mulai');
+                        if (!$checkin) return 'Belum Check-in';
+
+                        return match ($checkin->status_sidang) {
+                            'sedang_berlangsung' => 'Sedang Berlangsung',
+                            'selesai' => 'Selesai',
+                            default => 'Belum Mulai',
+                        };
                     })
                     ->label('Status Sidang'),
+
                 TextColumn::make('jenis_perkara')
                     ->badge()
                     ->color(fn($state) => match ($state) {
@@ -304,6 +255,7 @@ class ListAntrianSidangs extends ListRecords
                         default => 'secondary',
                     })
                     ->label('Jenis'),
+
                 TextColumn::make('waktu_sidang_efektif')
                     ->dateTime('H:i')
                     ->sortable()
@@ -317,7 +269,6 @@ class ListAntrianSidangs extends ListRecords
 
                 TextColumn::make('hakim_ketua')
                     ->formatStateUsing(function ($record) {
-
                         $mediatorText = $record->mediasi?->mediator_text;
 
                         if ($mediatorText) {
@@ -327,37 +278,24 @@ class ListAntrianSidangs extends ListRecords
                     })
                     ->searchable()
                     ->label('Hakim'),
+
                 TextColumn::make('panitera_active')
                     ->searchable()
                     ->label('PP'),
+
                 TextColumn::make('agenda')
                     ->getStateUsing(function ($record) {
                         if ($record->jadwalMediasi->isNotEmpty()) {
                             return "Mediasi";
-
-                            // 2. Cek Relasi hasOne: PK
                         } elseif ($record->jadwalPk->isNotEmpty()) {
                             return "PK";
-
-                            // 3. Akses Agenda dari Jadwal (Relasi HasMany)
                         }
-                        // Gunakan Nullsafe (?->) setelah first()
-                        // Jika jadwal kosong, $agenda akan bernilai null secara aman.
-                        $agenda = $record->jadwal->first()?->agenda;
 
-                        // Berikan nilai default jika $agenda masih null
+                        $agenda = $record->jadwal->first()?->agenda;
                         return $agenda ?? 'Sidang Lanjutan (Jadwal Belum Ditetapkan)';
                     })
                     ->searchable()
                     ->label('Agenda'),
-
-                // TextColumn::make('nomor_perkara_end')
-                //     ->getStateUsing(function ($record) {
-                //         return $record->nomor_perkara;
-                //     })
-                //     ->searchable()
-                //     ->sortable()
-                //     ->label('Nomor Perkara'),
             ])
             ->filters([])
             ->recordActions([
@@ -366,19 +304,19 @@ class ListAntrianSidangs extends ListRecords
                         ->label('Mulai Sidang')
                         ->icon('heroicon-m-play-circle')
                         ->color('success')
+                        // ✅ FIXED: Gunakan relasi yang sudah di-load
                         ->visible(function (Perkara $record) {
-                            $checkin = \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
-                                ->whereDate('waktu_checkin', now()->format('Y-m-d'))
-                                ->first();
-                            $status = optional($checkin)->status_sidang;
-
-                            // Kembalikan boolean (true/false) dari perbandingan
-                            return $status === 'belum_mulai';
+                            $checkin = $record->checkins->first();
+                            return $checkin?->status_sidang === 'belum_mulai';
                         })
                         ->action(function (Perkara $record) {
-                            // Update semua checkin pihak untuk perkara ini
+                            $today = now()->format('Y-m-d');
+
+                            // ✅ FIXED: Tambahkan filter tanggal
                             \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
+                                ->whereDate('waktu_checkin', $today)
                                 ->update(['status_sidang' => 'sedang_berlangsung']);
+
                             event(new RefreshQueuePage());
 
                             Notification::make()
@@ -386,49 +324,50 @@ class ListAntrianSidangs extends ListRecords
                                 ->body("Sidang perkara {$record->nomor_perkara} sedang berlangsung")
                                 ->success()
                                 ->send();
-
-                            // Optional: Trigger notifikasi suara
-                            // $this->dispatch('play-mulai-sidang');
                         })
                         ->requiresConfirmation()
                         ->modalHeading('Konfirmasi Mulai Sidang')
                         ->modalDescription('Apakah Anda yakin ingin memulai sidang perkara ini?')
                         ->modalSubmitActionLabel('Ya, Mulai Sidang'),
+
                     Action::make('selesai_sidang')
                         ->label('Selesaikan Sidang')
-                        ->icon('heroicon-m-play-circle')
+                        ->icon('heroicon-m-check-circle')
                         ->color('info')
+                        // ✅ FIXED: Gunakan relasi yang sudah di-load
                         ->visible(function (Perkara $record) {
-                            $checkin = \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
-                                ->whereDate('waktu_checkin', now()->format('Y-m-d'))
-                                ->first();
-                            $status = optional($checkin)->status_sidang;
-
-                            // Kembalikan boolean (true/false) dari perbandingan
-                            return $status === 'sedang_berlangsung';
+                            $checkin = $record->checkins->first();
+                            return $checkin?->status_sidang === 'sedang_berlangsung';
                         })
                         ->action(function (Perkara $record) {
-                            // Update semua checkin pihak untuk perkara ini
+                            $today = now()->format('Y-m-d');
+
+                            // ✅ Already correct with whereDate
                             \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
-                                ->whereDate('waktu_checkin', now()->format('Y-m-d'))
+                                ->whereDate('waktu_checkin', $today)
                                 ->update(['status_sidang' => 'selesai']);
+
                             event(new RefreshQueuePage());
+
                             Notification::make()
                                 ->title('Sidang Selesai!')
                                 ->body("Sidang perkara {$record->nomor_perkara} telah selesai")
                                 ->success()
                                 ->send();
-
-                            // Optional: Trigger notifikasi suara
-                            // $this->dispatch('play-mulai-sidang');
                         })
                         ->requiresConfirmation()
                         ->modalHeading('Konfirmasi Selesai Sidang')
                         ->modalDescription('Apakah Anda yakin sidang perkara ini selesai?')
                         ->modalSubmitActionLabel('Ya, Sidang Selesai'),
 
+                    Action::make('detail')
+                        ->label('Detail Pihak')
+                        ->icon('heroicon-m-eye')
+                        ->url(fn($record) => route('filament.admin.resources.checkin-pihaks.index', [
+                            'tableFilterForm' => ['perkara_id' => $record->perkara_id]
+                        ]))
+                        ->openUrlInNewTab(),
 
-                    Action::make('detail')->label('Detail Pihak')->icon('heroicon-m-eye')->url(fn($record) => route('filament.admin.resources.checkin-pihaks.index', ['tableFilterForm' => ['perkara_id' => $record->perkara_id]]))->openUrlInNewTab(),
                     Action::make('panggil')
                         ->label('Panggil Sidang')
                         ->icon('heroicon-m-bell')
@@ -448,65 +387,42 @@ class ListAntrianSidangs extends ListRecords
                                 ])
                                 ->required(),
                         ])
-                        ->action(function (Perkara $record, $data) {
+                        ->action(function (Perkara $record, array $data) {
                             // Ambil data perkara dari koneksi 'sipp'
                             $data_perkara = Perkara::on('sipp')->find($record->perkara_id);
 
-                            // Generate teks panggilan — COPY LOGIKA DARI CI4-MU!
+                            // Generate teks panggilan
                             $teks_panggilan = self::generateTeksPanggilan($data_perkara, $data['ruang']);
 
-                            // Simpan ke log atau kirim notifikasi
                             try {
-                                // Gunakan Laravel HTTP Client untuk request GET
+                                // ✅ FIXED: Simplified response handling
                                 $response = Http::get(env('WEBSOCKET_PANGGILAN_URL') . urlencode($teks_panggilan));
 
-                                // Jika respons berhasil, simpan flash message dan kembalikan JSON
                                 if ($response->successful()) {
                                     Notification::make()
                                         ->title('Perkara Dipanggil!')
-                                        ->body('Sukses')
+                                        ->body('Panggilan sidang berhasil dikirim')
                                         ->success()
                                         ->send();
-                                    return response()->json([
-                                        'status' => 'success',
-                                        'data' => $response->json() // Ambil data JSON dari respons
-                                    ]);
+
+                                    // ✅ Trigger suara jika ada
+                                    $this->dispatch('play-panggilan-sidang');
+                                } else {
+                                    Notification::make()
+                                        ->title('Gagal Memanggil!')
+                                        ->body('Gagal terhubung ke layanan panggilan')
+                                        ->danger()
+                                        ->send();
                                 }
-
-                                // Jika respons gagal, simpan flash message dan kembalikan JSON
-                                Notification::make()
-                                    ->title('Perkara Dipanggil!')
-                                    ->body('Gagal')
-                                    ->danger()
-                                    ->send();
-                                return response()->json([
-                                    'status' => 'fail',
-                                    'message' => 'Gagal terhubung ke layanan eksternal'
-                                ], $response->status());
                             } catch (\Exception $e) {
-                                // Tangani kegagalan koneksi
                                 Notification::make()
-                                    ->title('Perkara Dipanggil!')
-                                    ->body('Gagal')
+                                    ->title('Error!')
+                                    ->body('Terjadi kesalahan: ' . $e->getMessage())
                                     ->danger()
                                     ->send();
-                                return response()->json([
-                                    'status' => 'error',
-                                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-                                ]);
                             }
-
-                            // Notifikasi sukses
-
-
-                            // Optional: Trigger suara (jika ada)
-                            $this->dispatch('play-panggilan-sidang');
                         }),
                 ])
-
-
-
-
             ], position: RecordActionsPosition::BeforeColumns)
             ->paginated(false);
     }
