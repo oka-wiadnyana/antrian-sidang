@@ -68,16 +68,11 @@ class ListAntrianSidangs extends ListRecords
 
         return $perkaraHariIni;
     }
-
-    // ✅ Refactor getTabs()
     public function getTabs(): array
     {
         $now = now()->format('Y-m-d');
-        // $now = "2026-01-26";
 
         $perkaraHariIni = $this->getPerkaraWithCheckins($now);
-
-        // Filter hanya yang ada check-in
         $perkaraWithCheckins = $perkaraHariIni->filter(fn($p) => $p->checkins->isNotEmpty());
 
         $hakimKeys = collect();
@@ -118,18 +113,11 @@ class ListAntrianSidangs extends ListRecords
 
         return $tabs->toArray();
     }
-
-    // ✅ Refactor getTableRecords()
     public function getTableRecords(): Collection
     {
         $selectedTab = $this->activeTab;
         $now = now()->format('Y-m-d');
-        // $now = "2026-01-26";
-
-        // ✅ Reuse shared method
         $perkaraHariIni = $this->getPerkaraWithCheckins($now);
-
-        // Filter berdasarkan tab
         $filteredPerkara = $perkaraHariIni->filter(function ($perkara) use ($selectedTab) {
             if ($selectedTab === null || $selectedTab === 'semua' || $selectedTab === '') {
                 return true;
@@ -148,11 +136,7 @@ class ListAntrianSidangs extends ListRecords
                 return $hakim && $hakim->hakim_nama === $selectedTab;
             }
         });
-
-        // Filter hanya yang ada check-in
         $filteredPerkara = $filteredPerkara->filter(fn($perkara) => $perkara->checkins->isNotEmpty());
-
-        // Sorting
         return $filteredPerkara->sort(function ($a, $b) {
             $waktuSidangA = $a->waktu_sidang_efektif?->timestamp ?? PHP_INT_MAX;
             $waktuSidangB = $b->waktu_sidang_efektif?->timestamp ?? PHP_INT_MAX;
@@ -304,15 +288,12 @@ class ListAntrianSidangs extends ListRecords
                         ->label('Mulai Sidang')
                         ->icon('heroicon-m-play-circle')
                         ->color('success')
-                        // ✅ FIXED: Gunakan relasi yang sudah di-load
                         ->visible(function (Perkara $record) {
                             $checkin = $record->checkins->first();
                             return $checkin?->status_sidang === 'belum_mulai';
                         })
                         ->action(function (Perkara $record) {
                             $today = now()->format('Y-m-d');
-
-                            // ✅ FIXED: Tambahkan filter tanggal
                             \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
                                 ->whereDate('waktu_checkin', $today)
                                 ->update(['status_sidang' => 'sedang_berlangsung']);
@@ -334,15 +315,12 @@ class ListAntrianSidangs extends ListRecords
                         ->label('Selesaikan Sidang')
                         ->icon('heroicon-m-check-circle')
                         ->color('info')
-                        // ✅ FIXED: Gunakan relasi yang sudah di-load
                         ->visible(function (Perkara $record) {
                             $checkin = $record->checkins->first();
                             return $checkin?->status_sidang === 'sedang_berlangsung';
                         })
                         ->action(function (Perkara $record) {
                             $today = now()->format('Y-m-d');
-
-                            // ✅ Already correct with whereDate
                             \App\Models\CheckinPihak::where('perkara_id', $record->perkara_id)
                                 ->whereDate('waktu_checkin', $today)
                                 ->update(['status_sidang' => 'selesai']);
@@ -388,14 +366,10 @@ class ListAntrianSidangs extends ListRecords
                                 ->required(),
                         ])
                         ->action(function (Perkara $record, array $data) {
-                            // Ambil data perkara dari koneksi 'sipp'
                             $data_perkara = Perkara::on('sipp')->find($record->perkara_id);
-
-                            // Generate teks panggilan
                             $teks_panggilan = self::generateTeksPanggilan($data_perkara, $data['ruang']);
 
                             try {
-                                // ✅ FIXED: Simplified response handling
                                 $response = Http::get(env('WEBSOCKET_PANGGILAN_URL') . urlencode($teks_panggilan));
 
                                 if ($response->successful()) {
@@ -404,8 +378,6 @@ class ListAntrianSidangs extends ListRecords
                                         ->body('Panggilan sidang berhasil dikirim')
                                         ->success()
                                         ->send();
-
-                                    // ✅ Trigger suara jika ada
                                     $this->dispatch('play-panggilan-sidang');
                                 } else {
                                     Notification::make()
@@ -438,13 +410,11 @@ class ListAntrianSidangs extends ListRecords
         };
 
         if ($data_perkara->alur_perkara_id == 2) {
-            // Permohonan
             $pihak = explode('<br />', $data_perkara->pihak1_text ?? '');
             $namaPihak = count($pihak) > 1 ? strtolower(substr($pihak[0], 2)) . ", dan kawan kawan" : strtolower($pihak[0] ?? '');
             $nomorPerkara = implode('/', array_slice(explode('/', $data_perkara->nomor_perkara), 0, 3)) . ' ';
             return "Panggilan kepada pihak dalam perkara nomor $nomorPerkara, atas nama $namaPihak agar memasuki $ruang_sidang";
         } elseif (in_array($data_perkara->alur_perkara_id, [1, 7, 8])) {
-            // Gugatan
             $pihakPenggugat = explode('<br />', $data_perkara->pihak1_text ?? '');
             $namaPihakPenggugat = count($pihakPenggugat) > 1 ? strtolower(substr($pihakPenggugat[0], 2)) . ", dan kawan kawan" : strtolower($pihakPenggugat[0] ?? '');
             $pihakTergugat = explode('<br />', $data_perkara->pihak2_text ?? '');
@@ -452,17 +422,10 @@ class ListAntrianSidangs extends ListRecords
             $nomorPerkara = implode('/', array_slice(explode('/', $data_perkara->nomor_perkara), 0, 3)) . ' ';
             return "Panggilan kepada pihak dalam perkara nomor $nomorPerkara, antara $namaPihakPenggugat lawan $namaPihakTergugat agar memasuki $ruang_sidang";
         } else {
-            // Pidana
             $terdakwa = explode('<br />', $data_perkara->pihak2_text ?? '');
             $namaTerdakwa = count($terdakwa) > 1 ? strtolower(substr($terdakwa[0], 2)) . ", dan kawan kawan" : strtolower($terdakwa[0] ?? '');
             $nomorPerkara = implode('/', array_slice(explode('/', $data_perkara->nomor_perkara), 0, 3)) . ' ';
             return "Panggilan kepada pihak dalam perkara nomor $nomorPerkara, atas nama Terdakwa $namaTerdakwa agar memasuki $ruang_sidang";
         }
     }
-    // protected function getHeaderActions(): array
-    // {
-    //     return [
-    //         CreateAction::make(),
-    //     ];
-    // }
 }
