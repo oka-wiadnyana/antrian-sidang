@@ -8,6 +8,7 @@ use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use App\Filament\Resources\AntrianSidangs\Pages;
 use App\Filament\Resources\AntrianSidangs\Pages\ListAntrianSidangs;
+use App\Models\AntrianSidang;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
@@ -22,7 +23,7 @@ use UnitEnum;
 
 class AntrianSidangResource extends Resource
 {
-    protected static ?string $model = Perkara::class;
+    protected static ?string $model = AntrianSidang::class;
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
     protected static ?string  $navigationLabel = 'Antrian Sidang';
     protected static ?int $navigationSort = 1;

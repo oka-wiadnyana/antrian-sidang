@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CheckinPihak extends Model
 {
@@ -35,5 +36,10 @@ class CheckinPihak extends Model
     public function perkara()
     {
         return $this->belongsTo(Perkara::class, 'perkara_id', 'perkara_id');
+    }
+
+    public function antrianSidang(): BelongsTo
+    {
+        return $this->belongsTo(AntrianSidang::class, 'perkara_id', 'perkara_id');
     }
 }
