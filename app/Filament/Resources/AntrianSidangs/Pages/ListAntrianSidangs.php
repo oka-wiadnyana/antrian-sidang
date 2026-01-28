@@ -229,16 +229,46 @@ class ListAntrianSidangs extends ListRecords
                     ->label('Status'),
 
                 TextColumn::make('jenis_perkara')
+                    ->label('Jenis')
                     ->badge()
-                    ->color(fn($state) => match ($state) {
-                        'permohonan' => 'info',
-                        'gugatan_cerai' => 'warning',
-                        'gugatan_non_cerai' => 'danger',
-                        'gugatan_sederhana' => 'success',
-                        'pidana' => 'purple',
-                        default => 'secondary',
+                    ->color(function ($record) {
+                        $checkins = $record->checkins;
+                        $hasMediasi = $checkins->contains('jenis_sidang', 'mediasi');
+                        $hasPk = $checkins->contains('jenis_sidang', 'pk');
+
+                        // ✅ Prioritas warna: Mediasi > PK > Jenis Perkara Dasar
+                        if ($hasMediasi) return 'success'; // Mediasi = hijau
+                        if ($hasPk) return 'warning';      // PK = kuning
+
+                        return match ($record->jenis_perkara) {
+                            'permohonan' => 'info',
+                            'gugatan_cerai' => 'warning',
+                            'gugatan_non_cerai' => 'danger',
+                            'gugatan_sederhana' => 'success',
+                            'pidana' => 'purple',
+                            default => 'secondary',
+                        };
                     })
-                    ->label('Jenis'),
+                    ->getStateUsing(function ($record) {
+                        $checkins = $record->checkins;
+                        $hasMediasi = $checkins->contains('jenis_sidang', 'mediasi');
+                        $hasPk = $checkins->contains('jenis_sidang', 'pk');
+
+                        // ✅ Prioritas tampilan: Mediasi > PK > Jenis Perkara Dasar
+                        if ($hasMediasi) return 'Mediasi';
+                        if ($hasPk) return 'PK';
+
+                        // Format user-friendly untuk jenis perkara dasar
+                        return match ($record->jenis_perkara) {
+                            'permohonan' => 'Permohonan',
+                            'gugatan_cerai' => 'Gugatan Cerai',
+                            'gugatan_non_cerai' => 'Gugatan Non-Cerai',
+                            'gugatan_sederhana' => 'Gugatan Sederhana',
+                            'pidana' => 'Pidana',
+                            'praperadilan' => 'Praperadilan',
+                            default => ucfirst(str_replace('_', ' ', $record->jenis_perkara)),
+                        };
+                    }),
 
                 // ✅ KOLOM WAKTU SIDANG EFEKTIF - SUDAH DIHITUNG DINAMIS DI getTableRecords()
                 TextColumn::make('waktu_sidang_efektif')
@@ -269,7 +299,15 @@ class ListAntrianSidangs extends ListRecords
 
                 TextColumn::make('agenda')
                     ->searchable()
-                    ->label('Agenda'),
+                    ->label('Agenda')
+                    ->getStateUsing(function ($record) {
+                        $checkins = $record->checkins;
+                        $hasMediasi = $checkins->contains('jenis_sidang', 'mediasi');
+                        $hasPk = $checkins->contains('jenis_sidang', 'pk');
+                        if ($hasMediasi) return 'Mediasi';
+                        if ($hasPk) return 'PK';
+                        return $record->agenda;
+                    }),
             ])
             ->filters([])
             ->recordActions([
