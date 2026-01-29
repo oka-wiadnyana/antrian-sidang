@@ -346,12 +346,13 @@ class ListAntrianSidangs extends ListRecords
                         ->requiresConfirmation()
                         ->modalHeading('Mulai Sidang?')
                         ->modalSubmitActionLabel('Ya, Mulai'),
-
                     Action::make('selesai_sidang')
                         ->label('Selesai')
                         ->icon('heroicon-m-check-circle')
                         ->color('info')
-                        ->visible(fn($record) => $record->checkins?->first()?->status_sidang === 'sedang_berlangsung')
+                        // ->visible(function ($record) {
+                        //     return $record->checkins?->first()?->status_sidang === 'belum_mulai';
+                        // })
                         ->action(function ($record) {
 
                             if (!$record) {
@@ -379,8 +380,43 @@ class ListAntrianSidangs extends ListRecords
                                 ->send();
                         })
                         ->requiresConfirmation()
-                        ->modalHeading('Sidang Selesai?')
+                        ->modalHeading("Selesai Sidang?")
                         ->modalSubmitActionLabel('Ya, Selesai'),
+
+                    // Action::make('selesai_sidang')
+                    //     ->label('Selesai')
+                    //     ->icon('heroicon-m-check-circle')
+                    //     ->color('info')
+                    //     ->visible(fn($record) => $record->checkins?->first()?->status_sidang === 'sedang_berlangsung')
+                    //     ->action(function ($record) {
+
+                    //         // if (!$record) {
+                    //         //     Notification::make()
+                    //         //         ->title('Error!')
+                    //         //         ->body('Data tidak ditemukan')
+                    //         //         ->danger()
+                    //         //         ->send();
+                    //         //     return;
+                    //         // }
+
+                    //         // $perkaraId = $record->perkara_id;
+                    //         // $today = now()->format('Y-m-d');
+
+                    //         // CheckinPihak::where('perkara_id', $perkaraId)
+                    //         //     ->whereDate('waktu_checkin', $today)
+                    //         //     ->update(['status_sidang' => 'selesai']);
+
+                    //         // event(new RefreshQueuePage());
+
+                    //         // Notification::make()
+                    //         //     ->title('Sidang Selesai!')
+                    //         //     ->body("Perkara {$record->nomor_perkara}")
+                    //         //     ->success()
+                    //         //     ->send();
+                    //     })
+                    //     ->requiresConfirmation()
+                    //     ->modalHeading('Sidang Selesai?')
+                    //     ->modalSubmitActionLabel('Ya, Selesai'),
 
                     Action::make('detail')
                         ->label('Detail')
