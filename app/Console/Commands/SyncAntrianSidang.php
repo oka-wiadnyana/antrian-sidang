@@ -19,7 +19,7 @@ class SyncAntrianSidang extends Command
 
         try {
             // Hapus data lama
-            $deleted = AntrianSidang::where('tanggal_sidang', $tanggal)->delete();
+            $deleted = AntrianSidang::where('tanggal_sidang', '<=', $tanggal)->delete();
             $this->info("🗑️  Deleted {$deleted} old records");
 
             // Load hearing times
@@ -94,6 +94,7 @@ class SyncAntrianSidang extends Command
                     $totalPihak = ($perkara->pihak1_count ?? 0) + ($perkara->pihak2_count ?? 0) +
                         ($perkara->pihak3_count ?? 0) + ($perkara->pihak4_count ?? 0);
                     $statusKehadiran = $totalPihak > 0 ? "0/{$totalPihak}" : "0/0";
+                    // dd($perkara->panitera_active);
 
                     // Insert ke antrian_sidang
                     AntrianSidang::create([

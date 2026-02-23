@@ -72,7 +72,7 @@ class Perkara extends Model
     public function getPaniteraActiveAttribute()
     {
 
-        $first = $this->panitera()->first();
+        $first = $this->panitera()->where('aktif', 'Y')->first();
 
         return $first ? $first->panitera_nama  : 'Belum ditetapkan';
     }
