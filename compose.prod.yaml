@@ -29,6 +29,24 @@ services:
     networks:
       - apps_network
 
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: antrian_sidang-cron
+    restart: unless-stopped
+    # Loop ini yang menjalankan Laravel Scheduler setiap 60 detik
+    entrypoint: ["sh", "-c", "while [ true ]; do php /app/artisan schedule:run; sleep 60; done"]
+    env_file:
+      - .env
+    environment:
+      - APP_ENV=production
+      - TZ=Asia/Makassar
+    volumes:
+      - .:/app
+    networks:
+      - apps_network
+
 networks:
   apps_network:
     external: true
