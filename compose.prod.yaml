@@ -1,0 +1,34 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pengawasan_daerah-app-1
+    restart: unless-stopped
+
+    # Port 8081 tetap dibuka untuk pengecekan jalur belakang jika diperlukan
+    ports:
+      - "127.0.0.1:8081:80"
+
+    environment:
+      # PENTING: Paksa FrankenPHP jalan di port 80 internal agar tidak redirect ke HTTPS sendiri
+      - SERVER_NAME=:80
+      - APP_RUNTIME=FrankenPHP
+      - HTTPS="on"
+      - TRUSTED_PROXIES="*"
+      # Beritahu Laravel ini adalah lingkungan produksi
+      - APP_ENV=production
+
+    # Membaca sisa konfigurasi (DB, Key, dll) dari file .env
+    env_file:
+      - .env
+
+    volumes:
+      - .:/app
+
+    networks:
+      - apps_network
+
+networks:
+  apps_network:
+    external: true
