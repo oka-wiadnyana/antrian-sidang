@@ -3,12 +3,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: pengawasan_daerah-app-1
+    container_name: antrian_sidang-app-1
     restart: unless-stopped
 
     # Port 8081 tetap dibuka untuk pengecekan jalur belakang jika diperlukan
     ports:
-      - "127.0.0.1:8081:80"
+      - "127.0.0.1:8086:80"
 
     environment:
       # PENTING: Paksa FrankenPHP jalan di port 80 internal agar tidak redirect ke HTTPS sendiri
