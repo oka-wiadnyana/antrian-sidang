@@ -78,7 +78,7 @@ class ListAntrianSidangs extends ListRecords
                 'gugatan_sederhana' => Tab::make('GS')->icon('heroicon-o-scale'),
                 'mediasi' => Tab::make('Mediasi')->icon('heroicon-o-hand-raised'),
                 'pk' => Tab::make('PK')->icon('heroicon-o-arrow-path'),
-                'praperadilan' => Tab::make('PRAPERADILAN')->icon('heroicon-o-gavel'),
+                'praperadilan' => Tab::make('PRAPERADILAN')->icon('heroicon-o-scale'),
                 default => Tab::make($hakim)->icon('heroicon-o-user'),
             };
         }
