@@ -1,4 +1,4 @@
-FROM dunglas/frankenphp:latest-php8.2-alpine
+FROM dunglas/frankenphp:1.13.2-php8.2-alpine
 
 # Instal driver MySQL dan teman-temannya
 RUN install-php-extensions pdo_mysql gd intl zip opcache
